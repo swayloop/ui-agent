@@ -19,14 +19,34 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
-      - name: Lint (if script exists)
-        run: pnpm run lint --if-present
+      - name: Lint
+        run: |
+          if jq -e '.scripts.lint' package.json > /dev/null; then
+            pnpm lint
+          else
+            echo "no lint script, skipping"
+          fi
 
-      - name: Typecheck (if script exists)
-        run: pnpm run typecheck --if-present
+      - name: Typecheck
+        run: |
+          if jq -e '.scripts.typecheck' package.json > /dev/null; then
+            pnpm typecheck
+          else
+            echo "no typecheck script, skipping"
+          fi
 
-      - name: Build (if script exists)
-        run: pnpm run build --if-present
+      - name: Build
+        run: |
+          if jq -e '.scripts.build' package.json > /dev/null; then
+            pnpm build
+          else
+            echo "no build script, skipping"
+          fi
 
-      - name: Test (if script exists)
-        run: pnpm run test --if-present
+      - name: Test
+        run: |
+          if jq -e '.scripts.test' package.json > /dev/null; then
+            pnpm test
+          else
+            echo "no test script, skipping"
+          fi
