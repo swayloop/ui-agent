@@ -48,8 +48,9 @@
     "zod": "^3.23.0"
   },
   "devDependencies": {
-    "@commitlint/cli": "^19.6.0",
-    "@commitlint/config-conventional": "^19.6.0",
+    "@commitlint/cli": "^20.5.3",
+    "@commitlint/config-conventional": "^20.5.3",
+    "@swayloop/commitlint-config": "^0.2.0",
     "@types/node": "^22.10.0",
     "husky": "^9.1.7",
     "prettier": "^3.4.0",
@@ -58,6 +59,8 @@
     "vitest": "^2.1.0"
   },
   "pnpm": {
-    "onlyBuiltDependencies": ["esbuild"]
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ]
   }
 }
