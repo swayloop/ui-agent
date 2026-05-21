@@ -17,7 +17,7 @@
     "prepare": "husky",
     "build": "tsc",
     "dev": "tsx src/cli.ts",
-    "test": "vitest run",
+    "test": "vitest run --passWithNoTests",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
     "format": "prettier --write .",
