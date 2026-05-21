@@ -1,0 +1,14 @@
+branch=$(git rev-parse --abbrev-ref HEAD)
+
+if [ "$branch" = "main" ] || [ "$branch" = "dev" ]; then
+  exit 0
+fi
+
+pattern="^(feat|fix|refactor|docs|chore|test)/[0-9]+-.*$"
+
+if ! echo "$branch" | grep -qE "$pattern"; then
+  echo "❌ 브랜치 네이밍 규칙 위반: $branch"
+  echo "   형식: <type>/<이슈번호>-<설명>"
+  echo "   예시: feat/4-chat-history, fix/2-scraper-retry"
+  exit 1
+fi
