@@ -1,0 +1,75 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "@swayloop/ui-agent config",
+  "type": "object",
+  "additionalProperties": true,
+  "properties": {
+    "$schema": { "type": "string" },
+    "framework": {
+      "enum": ["next", "remix", "vite"],
+      "default": "next"
+    },
+    "designSystem": { "type": "string", "default": "shadcn" },
+    "paths": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "designSpec": { "type": "string", "default": "design/DESIGN.md" },
+        "skill": { "type": "string", "default": "design/SKILL.md" },
+        "tokens": { "type": "string", "default": "design/tokens.json" },
+        "componentsDir": { "type": "string", "default": "components/ui" },
+        "storiesDir": { "type": "string", "default": "components/stories" },
+        "manifest": {
+          "type": "string",
+          "default": "components/components.manifest.json"
+        },
+        "outputRoot": { "type": "string", "default": "app" }
+      }
+    },
+    "worker": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "agent": {
+          "enum": ["claude", "codex", "cursor", "gemini"],
+          "default": "claude"
+        },
+        "parallelism": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 16,
+          "default": 4
+        },
+        "isolation": {
+          "enum": ["worktree", "sandbox"],
+          "default": "worktree"
+        }
+      }
+    },
+    "figma": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "fileKey": { "type": ["string", "null"], "default": null },
+        "syncLibrary": { "type": "boolean", "default": false },
+        "generateMockups": { "type": "boolean", "default": false }
+      }
+    },
+    "qa": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "designLint": { "type": "boolean", "default": true },
+        "a11y": { "type": "boolean", "default": true },
+        "responsive": { "type": "boolean", "default": true },
+        "visualDiff": { "type": "boolean", "default": false },
+        "retryOnFail": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 5,
+          "default": 1
+        }
+      }
+    }
+  }
+}
