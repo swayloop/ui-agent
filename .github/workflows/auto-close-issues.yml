@@ -1,0 +1,13 @@
+name: Auto Close Issues
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [dev]
+
+jobs:
+  auto-close:
+    if: github.event.pull_request.merged == true
+    uses: swayloop/.github/.github/workflows/auto-close-issues.yml@main
+    permissions:
+      issues: write

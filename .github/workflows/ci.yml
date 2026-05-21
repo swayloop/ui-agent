@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main, dev]
+
+jobs:
+  lint-build-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: |
+          if jq -e '.scripts.lint' package.json > /dev/null; then
+            pnpm lint
+          else
+            echo "no lint script, skipping"
+          fi
+
+      - name: Typecheck
+        run: |
+          if jq -e '.scripts.typecheck' package.json > /dev/null; then
+            pnpm typecheck
+          else
+            echo "no typecheck script, skipping"
+          fi
+
+      - name: Build
+        run: |
+          if jq -e '.scripts.build' package.json > /dev/null; then
+            pnpm build
+          else
+            echo "no build script, skipping"
+          fi
+
+      - name: Test
+        run: |
+          if jq -e '.scripts.test' package.json > /dev/null; then
+            pnpm test
+          else
+            echo "no test script, skipping"
+          fi

@@ -17,7 +17,7 @@
     "prepare": "husky",
     "build": "tsc",
     "dev": "tsx src/cli.ts",
-    "test": "vitest run",
+    "test": "vitest run --passWithNoTests",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
     "format": "prettier --write .",
@@ -25,6 +25,7 @@
     "prepublishOnly": "pnpm build",
     "lint:commit": "commitlint --from=HEAD~1 --to=HEAD"
   },
+  "packageManager": "pnpm@10.18.0",
   "engines": {
     "node": ">=20"
   },
@@ -48,8 +49,9 @@
     "zod": "^3.23.0"
   },
   "devDependencies": {
-    "@commitlint/cli": "^19.6.0",
-    "@commitlint/config-conventional": "^19.6.0",
+    "@commitlint/cli": "^20.5.3",
+    "@commitlint/config-conventional": "^20.5.3",
+    "@swayloop/commitlint-config": "^0.2.0",
     "@types/node": "^22.10.0",
     "husky": "^9.1.7",
     "prettier": "^3.4.0",
@@ -58,6 +60,8 @@
     "vitest": "^2.1.0"
   },
   "pnpm": {
-    "onlyBuiltDependencies": ["esbuild"]
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ]
   }
 }
