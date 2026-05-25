@@ -63,5 +63,6 @@
     "onlyBuiltDependencies": [
       "esbuild"
     ]
-  }
+  },
+  "prettier": "@swayloop/prettier-config"
 }

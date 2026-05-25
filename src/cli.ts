@@ -7,7 +7,9 @@ const program = new Command();
 
 program
   .name('ui-agent')
-  .description('AI-native UI generation pipeline that works across Claude Code, Codex, Cursor, and Gemini CLI')
+  .description(
+    'AI-native UI generation pipeline that works across Claude Code, Codex, Cursor, and Gemini CLI',
+  )
   .version('0.0.0');
 
 program
@@ -51,9 +53,6 @@ program
   .description('Run design lint, a11y, responsive, and visual QA')
   .action(notYet('qa'));
 
-program
-  .command('status')
-  .description('Show pipeline state')
-  .action(notYet('status'));
+program.command('status').description('Show pipeline state').action(notYet('status'));
 
 await program.parseAsync();
