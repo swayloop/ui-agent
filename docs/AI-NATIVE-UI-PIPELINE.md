@@ -465,24 +465,68 @@ pnpm ui-agent status                # 단계별 진행 상황
 
 ---
 
-## 6. 다음 단계 (구현 순서)
+## 6. 구현 전략 (Phase 기반)
 
-> 한 번에 다 만들지 말고 가장 얇은 수직 슬라이스부터. 명령 단위로 쌓는다.
+> **원칙**: 한 프로젝트에서 dirty path로 끝까지 동작시킨 뒤, 두 번째 사용처에 들어갈 때 공통부만 추출해 패키지화. 추상화는 페인이 실재할 때 트리거 기반으로 추가. "혹시 필요할까봐" 짓지 않는다.
 
-1. **`init` 명령 + config 스키마 + 템플릿 3개** — 사용자가 시작점을 갖는다.
-2. **`runtime/adapters/claude.sh` + `30-build-page.md`** — 최소 워커 1개가 동작 (단일 페이지).
-3. **`tokens` 명령** — DESIGN.md → tokens.json 한 사이클. 단일 워커, 결정적 산출물.
-4. **`components` 명령 (단일 워커, N=1)** — manifest 스키마 + shadcn 시드 기반 생성. Worker I/O Contract 적용.
-5. **`components` 병렬화 (N=4)** — 컴포넌트별 격리. manifest 머지 로직.
-6. **`pages` 명령 (단일 워커, N=1)** — worktree 격리 + Worker I/O Contract.
-7. **`pages` 병렬화 (N=4)** — xargs -P, 결과 머지.
-8. **`qa`: Design Lint** (ESLint plugin) — 가장 ROI 높음.
-9. **두 번째 어댑터(codex)** — 같은 컴포넌트/페이지를 다른 agent로 돌려 어댑터 동등성 검증. 인터페이스가 진짜 같은지 확인.
-10. **Figma Library 미러** (한쪽 방향만 — code → Figma).
-11. **`qa`: Visual / a11y / Responsive** 추가.
-12. **(선택) MCP `design-registry` 서버** — §4.3 신호가 실제로 발생하면.
+설계 자체(§1~§5)는 최종 그림이지만, **그 모양으로 처음부터 짓지는 않는다**. 솔로 개발자에게 미리 만든 추상화는 6개월치 미래 비용을 오늘 결제하는 것과 같다. Phase 단계를 건너뛰지 말 것.
 
-각 단계마다 본인 프로젝트 1곳에서 먼저 dogfood → 안정화 후 패키지 버전 릴리스.
+### Phase 0 — Dogfood in UXResearchEngine (현재)
+
+`UXResearchEngine` 프로젝트 안에 hardcoded shell script 4개로 전체 플로우 동작. 패키지로 빼지 않음.
+
+```
+UXResearchEngine/
+├── scripts/
+│   ├── gen-tokens.sh
+│   ├── gen-components.sh
+│   ├── gen-pages.sh
+│   └── qa.sh
+└── design/
+    ├── DESIGN.md
+    └── SKILL.md
+```
+
+**제약 (의도적 생략)**
+
+- Claude 1개만 호출 (`claude -p` 직접). 어댑터 추상화 X
+- 순차 실행. worktree·병렬화 X
+- MCP X — 파일 주입만
+- 패키지화·config schema·다중 framework 지원 X
+- 파일 경로·프롬프트 텍스트 전부 스크립트에 하드코딩
+
+**완료 조건** — tokens → components → pages → qa 한 사이클이 end-to-end로 통과해 실제 페이지 1~2개를 손으로 짜지 않고 배포 직전까지 가져감. 이 과정에서 **진짜 어려운 게 무엇인지** (어떤 프롬프트가 잘 안 먹는지, 어디서 일관성이 깨지는지) 가 보임 — 이게 추상화보다 훨씬 가치 있는 정보.
+
+### Phase 1 — Extract to `@swayloop/ui-agent` (트리거: 2번째 프로젝트 시작)
+
+UXResearchEngine 스크립트와 2번째 프로젝트의 요구를 diff → **동일한 부분만** 패키지로 추출. 이미 만들어둔 `init` 명령 + 템플릿 + config schema (커밋 c7b54cf) 위에 얹는다.
+
+추출 우선순위:
+
+1. **프롬프트** (`runtime/prompts/`) — 가장 재사용 가능, 가장 빨리 추출
+2. **단계별 CLI 명령** (`tokens` / `components` / `pages` / `qa`) — 인터페이스 표준화
+3. **Worker I/O Contract** (§3.5) — 워커 입력 디렉토리 구조 + 출력 경로 제약
+
+**여전히 미루는 것** — adapter 인터페이스(아직 Claude 1개), worktree 병렬화, MCP. Phase 2~4 트리거가 실제로 오면 그때.
+
+### Phase 2 — Adapter 추상화 (트리거: Claude 토큰 한도가 자주 막힘)
+
+`runtime/adapters/claude.sh` + `codex.sh` 두 개를 동일 인터페이스(§3.7.2)로 만든다. 같은 컴포넌트/페이지를 두 어댑터로 돌려 결과 동등성을 검증해야 인터페이스가 진짜 어댑터 가능한지 확인됨. Cursor/Gemini는 더 미룬다.
+
+### Phase 3 — 병렬화 (트리거: 순차 생성이 체감상 느림)
+
+`git worktree` + `xargs -P` orchestrator. components 먼저(파일 격리 단순), pages는 그 다음(라우트 디렉토리 격리). Worker I/O Contract의 "허용 출력 경로" 제약을 강제하는 lint도 같이.
+
+### Phase 4 — 선택 기능 (각 트리거 발생 시)
+
+| 기능 | 트리거 |
+| --- | --- |
+| Figma Library 미러 (code → Figma) | 디자인 산출물을 디자이너/PM과 Figma에서 공유할 필요 발생 |
+| Visual QA (Chromatic) | Design Lint만으로 못 잡는 시각 회귀가 실제 발생 |
+| a11y / Responsive QA | 접근성/반응형 회귀가 실제 보고됨 |
+| MCP `design-registry` | §4.3 신호 (컴포넌트 200+ 등) 실제 발생 |
+
+**핵심** — design doc에 적혀 있다고 지금 만들 이유 아님. 위 표의 트리거는 가설이 아니라 **실제 발생 여부**로 판단.
 
 ---
 
