@@ -7,3 +7,4 @@
 | 작업 영역            | 참고 파일                                                      |
 | -------------------- | -------------------------------------------------------------- |
 | 아키텍처 / 설계 의도 | [docs/AI-NATIVE-UI-PIPELINE.md](docs/AI-NATIVE-UI-PIPELINE.md) |
+| 새 이슈 생성 (CLI)   | [org guide](https://github.com/swayloop/.github/blob/main/docs/issue-management.md) — template frontmatter 는 무시되니 `gh issue create ... --label "status: triage"` 명시 필수 |
