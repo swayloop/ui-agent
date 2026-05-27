@@ -8,9 +8,7 @@
   },
   "files": [
     "dist",
-    "runtime",
     "templates",
-    "schema",
     "README.md"
   ],
   "scripts": {

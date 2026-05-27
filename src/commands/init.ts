@@ -16,8 +16,9 @@ interface FileMapping {
 
 const MAPPINGS: FileMapping[] = [
   { src: 'DESIGN.md.tpl', dst: 'design/DESIGN.md' },
-  { src: 'SKILL.md.tpl', dst: 'design/SKILL.md' },
-  { src: 'ui-agent.config.json.tpl', dst: 'ui-agent.config.json' },
+  { src: 'SKILL.md.tpl', dst: '.claude/skills/ui-agent-workflow/SKILL.md' },
+  { src: 'claude-settings.json.tpl', dst: '.claude/settings.json' },
+  { src: 'design-lint-gate.sh.tpl', dst: '.claude/hooks/design-lint-gate.sh' },
 ];
 
 async function exists(p: string): Promise<boolean> {
@@ -58,9 +59,9 @@ export async function initCommand(options: InitOptions = {}): Promise<void> {
   console.log(chalk.dim(`  ${created} created, ${skipped} skipped`));
   console.log();
   console.log('Next steps:');
-  console.log(`  1. Edit ${chalk.cyan('design/DESIGN.md')} with your components and pages`);
-  console.log(`  2. Run ${chalk.cyan('pnpm ui-agent tokens')} to generate design tokens`);
-  console.log(`  3. Run ${chalk.cyan('pnpm ui-agent components')} to generate components`);
-  console.log(`  4. Run ${chalk.cyan('pnpm ui-agent pages')} to generate pages`);
+  console.log(`  1. ${chalk.cyan('chmod +x .claude/hooks/*.sh')} — hook 실행 권한`);
+  console.log(`  2. ${chalk.cyan('design/DESIGN.md')} 채움 (또는 Awesome-Design-MD 등 외부 자산 채택)`);
+  console.log(`  3. ${chalk.cyan('.claude/skills/ui-agent-workflow/SKILL.md')} 의 description + 본문 채움`);
+  console.log(`  4. (Codex 사용 시) ${chalk.dim('cp -r .claude/skills .codex/ && cp -r .claude/hooks .codex/')}`);
   console.log();
 }
