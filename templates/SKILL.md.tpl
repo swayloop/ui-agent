@@ -1,33 +1,32 @@
-# SKILL.md
+---
+name: ui-agent-workflow
+description: TODO — consumer 채움. 어떤 작업 시 이 SKILL 이 로드될지 1~2 줄 (예 "UI 페이지/컴포넌트 작성 시")
+---
 
-이 프로젝트의 코딩·디자인 컨벤션. agent가 모든 명령에서 따라야 한다.
-DESIGN.md가 *무엇을* 만들지라면, 이 파일은 *어떻게* 만들지다.
+# UI Agent Workflow
 
-## Naming
+이 SKILL 은 [@swayloop/ui-agent](https://github.com/swayloop/ui-agent) 의 디자인 워크플로우를 따른다.
+워크플로우 정의: [DESIGN-WORKFLOW.md](https://github.com/swayloop/ui-agent/blob/main/docs/DESIGN-WORKFLOW.md).
 
-- 컴포넌트: PascalCase (예: `KPICard`)
-- 파일: kebab-case (예: `kpi-card.tsx`)
-- 페이지 라우트: `/snake-case` 또는 `/kebab-case` (Next 컨벤션 따름)
+## DESIGN.md 참조
 
-## Tokens
+`design/DESIGN.md` 를 먼저 읽어 토큰·컴포넌트·원칙 숙지. 본문에 없는 값은 추가 X — `proposed_*` 로 보고만.
 
-- 색상·간격·radius는 design tokens만 사용. 하드코딩 금지.
-- 토큰이 없으면 결과 JSON에 `proposed_tokens`로 보고. 직접 추가 금지.
+## 컴포넌트 생성 (Workflow Step 2)
 
-## Components
+- shadcn MCP 로 설치 + 커스텀 (`components/ui/*.tsx`)
+- 각 컴포넌트마다 `.stories.tsx` 동반 (`components/stories/*`)
+- `components/components.manifest.json` 에 등록 (이름·variant·slots·tags)
 
-- 공용 컴포넌트(`components/ui/*`)는 `components.manifest.json`에 등록된 것만 사용.
-- 새로 필요하면 `proposed_components`로 보고. 직접 만들지 않는다.
-- 페이지 전용 컴포넌트는 `app/<route>/components/`에만 둔다.
+## 페이지 코드 변환 (Workflow Step 5)
 
-## Style
+- 워커 컨텍스트: `components/` + `stories/` + manifest + Figma 페이지
+- 공통 파일 워커 1 개 → 페이지 워커 N 개 (파일 소유권 분리)
+- 다른 워커가 소유한 파일·전역 CSS·토큰 절대 수정 X
 
-- TypeScript strict.
-- Tailwind 클래스는 토큰 기반 유틸만 사용 (`bg-background`, `text-foreground` 등).
-- 인라인 스타일·매직 넘버 금지.
+## 가드레일
 
-## A11y
+`.claude/hooks/` 의 hook 이 PreToolUse 로 강제 — exit 2 차단, exit 0 허용.
+hook 실패 시 *작업 보고에 명시* 하고 사람 결정 대기.
 
-- 모든 인터랙티브 요소는 키보드 포커스 가능.
-- `alt` / `aria-label` 누락 금지.
-- 색상 대비 WCAG AA 이상.
+<!-- consumer 가 추가 워크플로우 지시 사항을 여기에 -->
