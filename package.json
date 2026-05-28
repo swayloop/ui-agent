@@ -1,6 +1,6 @@
 {
   "name": "@swayloop/ui-agent",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "description": "AI-native UI generation pipeline that works across Claude Code, Codex, Cursor, and Gemini CLI.",
   "type": "module",
   "bin": {
