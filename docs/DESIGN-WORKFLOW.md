@@ -33,14 +33,18 @@
 
 `pnpm ui-agent init` 으로 consumer 프로젝트에 카피. consumer 가 소유·편집.
 
-| 파일 | 위치 | 내용 |
+| 파일 | 위치 (레포 루트 기준) | 내용 |
 | --- | --- | --- |
 | `DESIGN.md` | `design/DESIGN.md` | skeleton — consumer 채움 또는 외부 자산 (Awesome-Design-MD 등) 채택 |
-| `SKILL.md` | `.claude/skills/ui-agent-workflow/SKILL.md` | skeleton — 워크플로우 가정 (Storybook + manifest 등) |
-| `settings.json` | `.claude/settings.json` | PreToolUse 가드레일 hook 1 개 (design-lint-gate) |
-| `design-lint-gate.sh` | `.claude/hooks/design-lint-gate.sh` | Step 4 미통과 시 Step 5 진입 차단 skeleton |
+| `SKILL.md` | `.claude/skills/ui-agent-workflow/SKILL.md` + `.codex/skills/...` (자동 카피, 동일 내용) | skeleton — 워크플로우 가정 |
+| `settings.json` (Claude) | `.claude/settings.json` | PreToolUse 가드레일 hook 1 개 (design-lint-gate) |
+| `design-lint-gate.sh` | `.claude/hooks/...` + `.codex/hooks/...` (자동 카피, 동일 내용) | Step 4 미통과 시 Step 5 진입 차단 skeleton |
 
-**Codex 호환** — `cp -r .claude/skills .codex/` + `cp -r .claude/hooks .codex/` 로 사용. shell 스크립트 동일.
+**자동화** — init 이 `.git` 찾아 레포 루트에 설치 + `.sh` 파일 자동 chmod +x.
+
+**Codex hooks.json** — Claude `settings.json` 과 스키마 다름. consumer 가 직접 작성 (자동 생성 deferred). skills + hooks 스크립트는 자동 카피되므로 hooks.json 만 추가하면 동작.
+
+**Divergence 주의** — `.claude/skills/...` 와 `.codex/skills/...` 가 동일 내용으로 카피됨. 한쪽 편집 시 다른 쪽 수동 동기화 필요.
 
 ## 가드레일 hooks 패턴
 
