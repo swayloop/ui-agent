@@ -33,12 +33,12 @@
 
 `pnpm ui-agent init` 으로 consumer 프로젝트에 카피. consumer 가 소유·편집.
 
-| 파일 | 위치 (레포 루트 기준) | 내용 |
-| --- | --- | --- |
-| `DESIGN.md` | `design/DESIGN.md` | skeleton — consumer 채움 또는 외부 자산 (Awesome-Design-MD 등) 채택 |
-| `SKILL.md` | `.claude/skills/ui-agent-workflow/SKILL.md` + `.codex/skills/...` (자동 카피, 동일 내용) | skeleton — 워크플로우 가정 |
-| `settings.json` (Claude) | `.claude/settings.json` | PreToolUse 가드레일 hook 1 개 (design-lint-gate) |
-| `design-lint-gate.sh` | `.claude/hooks/...` + `.codex/hooks/...` (자동 카피, 동일 내용) | Step 4 미통과 시 Step 5 진입 차단 skeleton |
+| 파일                     | 위치 (레포 루트 기준)                                                                    | 내용                                                                |
+| ------------------------ | ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| `DESIGN.md`              | `design/DESIGN.md`                                                                       | skeleton — consumer 채움 또는 외부 자산 (Awesome-Design-MD 등) 채택 |
+| `SKILL.md`               | `.claude/skills/ui-agent-workflow/SKILL.md` + `.codex/skills/...` (자동 카피, 동일 내용) | skeleton — 워크플로우 가정                                          |
+| `settings.json` (Claude) | `.claude/settings.json`                                                                  | PreToolUse 가드레일 hook 1 개 (design-lint-gate)                    |
+| `design-lint-gate.sh`    | `.claude/hooks/...` + `.codex/hooks/...` (자동 카피, 동일 내용)                          | Step 4 미통과 시 Step 5 진입 차단 skeleton                          |
 
 **자동화** — init 이 `.git` 찾아 레포 루트에 설치 + `.sh` 파일 자동 chmod +x.
 
@@ -51,12 +51,12 @@
 - **PreToolUse + exit 2** = 차단, **exit 0** = 허용
 - 가드레일 후보 (워크플로우 단계별):
 
-| 단계 | 가드레일 | 메커니즘 |
-| --- | --- | --- |
-| Step 2 | manifest 미등록 컴포넌트 직접 생성 차단 | PreToolUse + path 검사 |
-| Step 4 → 5 | 디자인 린트 미통과 시 코드 변환 차단 | PreToolUse (`design-lint-gate.sh` 예시) |
-| Step 5 | 워커가 다른 워커 소유 파일 수정 차단 | PreToolUse + path 소유권 검사 |
-| Step 6 | Write 후 자동 prettier / typecheck | PostToolUse |
+| 단계       | 가드레일                                | 메커니즘                                |
+| ---------- | --------------------------------------- | --------------------------------------- |
+| Step 2     | manifest 미등록 컴포넌트 직접 생성 차단 | PreToolUse + path 검사                  |
+| Step 4 → 5 | 디자인 린트 미통과 시 코드 변환 차단    | PreToolUse (`design-lint-gate.sh` 예시) |
+| Step 5     | 워커가 다른 워커 소유 파일 수정 차단    | PreToolUse + path 소유권 검사           |
+| Step 6     | Write 후 자동 prettier / typecheck      | PostToolUse                             |
 
 기본 ship 은 Step 4 → 5 가드레일 1 개. 나머지는 consumer 가 필요 시 추가.
 

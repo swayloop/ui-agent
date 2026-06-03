@@ -77,9 +77,17 @@ export async function initCommand(options: InitOptions = {}): Promise<void> {
   console.log(chalk.dim(`  ${created} created, ${skipped} skipped`));
   console.log();
   console.log('Next steps:');
-  console.log(`  1. ${chalk.cyan('design/DESIGN.md')} 채움 (또는 Awesome-Design-MD 등 외부 자산 채택)`);
-  console.log(`  2. ${chalk.cyan('.claude/skills/ui-agent-workflow/SKILL.md')} 의 description + 본문 채움`);
-  console.log(`     (Codex 도 동일 내용 — ${chalk.dim('.codex/skills/...')} 에 자동 카피됨, 편집 시 양쪽 동기화 필요)`);
-  console.log(`  3. (Codex 사용 시) ${chalk.dim('.codex/hooks.json')} 직접 작성 — Claude settings.json 과 스키마 다름`);
+  console.log(
+    `  1. ${chalk.cyan('design/DESIGN.md')} 채움 (또는 Awesome-Design-MD 등 외부 자산 채택)`,
+  );
+  console.log(
+    `  2. ${chalk.cyan('.claude/skills/ui-agent-workflow/SKILL.md')} 의 description + 본문 채움`,
+  );
+  console.log(
+    `     (Codex 도 동일 내용 — ${chalk.dim('.codex/skills/...')} 에 자동 카피됨, 편집 시 양쪽 동기화 필요)`,
+  );
+  console.log(
+    `  3. (Codex 사용 시) ${chalk.dim('.codex/hooks.json')} 직접 작성 — Claude settings.json 과 스키마 다름`,
+  );
   console.log();
 }
