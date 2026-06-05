@@ -13,3 +13,4 @@ jobs:
     uses: swayloop/.github/.github/workflows/release-please.yml@main
     with:
       release-type: node
+    secrets: inherit
