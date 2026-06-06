@@ -1,0 +1,7 @@
+interface:
+   display_name: '스킬 만들기 (create-skill)'
+   short_description: 'Claude/Codex 호환 스킬 scaffold·검증·설치'
+   default_prompt: '$create-skill 새 스킬을 만들자. 이름·한 작업·구체적인 description·예시를 물어보고, scripts/create-skill.sh 로 scaffold → 채우기 → verify → install 순으로 진행해줘.'
+
+policy:
+   allow_implicit_invocation: true
