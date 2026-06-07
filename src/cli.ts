@@ -28,11 +28,15 @@ program
 
 program
   .command('tokens')
-  .description('DESIGN.md → tokens.json (DTCG) 변환 (@google/design.md 래핑)')
+  .description('DESIGN.md → tokens (DTCG / Tailwind / ...) 변환 (@google/design.md 래핑)')
   .option('--in <path>', `입력 DESIGN.md 경로 (기본 design/DESIGN.md)`)
-  .option('--out <path>', `출력 tokens.json 경로 (기본 design/tokens.json)`)
+  .option('--out <path>', `출력 파일 경로 (기본 design/tokens.json)`)
+  .option(
+    '--format <fmt>',
+    `출력 format. @google/design.md 에 그대로 전달 (dtcg / css-tailwind / json-tailwind / tailwind / ...). 기본 dtcg`,
+  )
   .option('--lint', '변환 전에 @google/design.md lint 실행 (WCAG / 참조 검증)')
-  .action(async (options: { in?: string; out?: string; lint?: boolean }) => {
+  .action(async (options: { in?: string; out?: string; format?: string; lint?: boolean }) => {
     try {
       await tokensCommand(options);
     } catch (err) {

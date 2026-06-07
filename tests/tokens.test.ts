@@ -129,4 +129,27 @@ describe('tokensCommand', () => {
     const [, body] = writeFileMock.mock.calls[0]!;
     expect((body as Buffer).toString()).toBe(payload);
   });
+
+  it('--format 미지정 시 dtcg (호환성)', async () => {
+    await tokensCommand({});
+    const [, args] = spawnMock.mock.calls[0] as [string, string[]];
+    const fmtIdx = args.indexOf('--format');
+    expect(args[fmtIdx + 1]).toBe('dtcg');
+  });
+
+  it('--format css-tailwind passthrough', async () => {
+    await tokensCommand({ format: 'css-tailwind', out: 'src/styles/theme.css' });
+    const [, args] = spawnMock.mock.calls[0] as [string, string[]];
+    const fmtIdx = args.indexOf('--format');
+    expect(args[fmtIdx + 1]).toBe('css-tailwind');
+    const [outPath] = writeFileMock.mock.calls[0]!;
+    expect(String(outPath).endsWith('src/styles/theme.css')).toBe(true);
+  });
+
+  it('미지의 --format 도 그대로 passthrough (값 검증 안 함)', async () => {
+    await tokensCommand({ format: 'some-future-fmt' });
+    const [, args] = spawnMock.mock.calls[0] as [string, string[]];
+    const fmtIdx = args.indexOf('--format');
+    expect(args[fmtIdx + 1]).toBe('some-future-fmt');
+  });
 });
