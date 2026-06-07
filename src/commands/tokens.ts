@@ -1,5 +1,5 @@
 import { spawn } from 'node:child_process';
-import { access } from 'node:fs/promises';
+import { access, mkdir, writeFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import chalk from 'chalk';
 
@@ -55,6 +55,30 @@ function runDesignMd(args: string[], cwd: string): Promise<number> {
   });
 }
 
+function runDesignMdToFile(args: string[], cwd: string, outFile: string): Promise<number> {
+  return new Promise((res) => {
+    const chunks: Buffer[] = [];
+    const proc = spawn('npx', [PACKAGE, ...args], {
+      stdio: ['inherit', 'pipe', 'inherit'],
+      cwd,
+    });
+    proc.stdout?.on('data', (chunk: Buffer) => chunks.push(chunk));
+    proc.on('exit', async (code) => {
+      if (code === 0) {
+        try {
+          await mkdir(dirname(outFile), { recursive: true });
+          await writeFile(outFile, Buffer.concat(chunks));
+        } catch {
+          res(1);
+          return;
+        }
+      }
+      res(code ?? 1);
+    });
+    proc.on('error', () => res(1));
+  });
+}
+
 export async function tokensCommand(options: TokensOptions = {}): Promise<void> {
   const cwd = await findRepoRoot(process.cwd());
   const inRel = options.in ?? DEFAULT_IN;
@@ -73,8 +97,8 @@ export async function tokensCommand(options: TokensOptions = {}): Promise<void> 
     if (code !== 0) throw new TokensError(`${PACKAGE} lint 실패`, code);
   }
 
-  const code = await runDesignMd(['export', 'dtcg', '--in', input, '--out', output], cwd);
-  if (code !== 0) throw new TokensError(`${PACKAGE} export dtcg 실패`, code);
+  const code = await runDesignMdToFile(['export', input, '--format', 'dtcg'], cwd, output);
+  if (code !== 0) throw new TokensError(`${PACKAGE} export 실패`, code);
 
   console.log(chalk.green(`✓ ${outRel}`));
 }
