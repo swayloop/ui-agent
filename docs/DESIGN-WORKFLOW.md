@@ -5,7 +5,7 @@
 ## 단계
 
 1. **DESIGN.md / SKILL.md 준비** (사람)
-   - **DESIGN.md**: 디자인 시스템 명세 (토큰 + 컴포넌트 spec + 디자인 원칙). 자체 작성 또는 기존 자산 (Awesome-Design-MD / OMD / Taste-Skill 등) 채택. **페이지 정보 없음**
+   - **DESIGN.md**: 디자인 시스템 명세 (토큰 + 컴포넌트 spec + 디자인 원칙). 자체 작성 또는 기존 자산 (Awesome-Design-MD / OMD / Taste-Skill 등 — [REFERENCES.md](REFERENCES.md)) 채택. **페이지 정보 없음**
    - **SKILL.md**: AI 행동 지침 (컴포넌트 + story 동시 작성, manifest 유지 등)
 
 2. **공통 컴포넌트 + Storybook + manifest 생성** (AI, shadcn 기반)
