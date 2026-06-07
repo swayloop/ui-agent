@@ -12,9 +12,10 @@ allowed-tools: Bash, Read, Write
 
 ## 절차
 
-0. **사전 확인** — 현재 에이전트 (Claude / Codex 중 본인) 기준. 둘 다 미충족이면 사람 결정 대기. 상세 → `references/example.md` "0. 전제":
+0. **사전 확인** — 현재 에이전트 (Claude / Codex 중 본인) 기준. 미충족 항목 있으면 사람 결정 대기. 상세 → `references/example.md` "0. 전제":
    - **shadcn MCP 연결** — 본인 도구 목록에 shadcn 관련 있는지. 없으면 연결 가이드 안내
    - **Storybook 설치** — `.storybook/` 또는 `package.json` 의 `@storybook/*`. 없으면 `pnpm dlx storybook@latest init` 안내. 거부 / 보류 시 step 3 (story) skip
+   - **eslint-plugin-tailwindcss 설치** — `package.json` 의 dep 및 `eslint.config.js` 에 등록 여부. 없으면 `pnpm add -D eslint-plugin-tailwindcss` + config 스니펫 안내 (step 5 lint 강제용)
 1. shadcn MCP 로 베이스 설치 → `components/ui/<name>.tsx`
 2. theme 토큰을 Tailwind 클래스로 매핑해 컴포넌트 본문 작성 (예: `bg-primary`, `text-on-primary`)
 3. Storybook story → `components/stories/<name>.stories.tsx`

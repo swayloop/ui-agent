@@ -42,6 +42,20 @@ pnpm dlx storybook@latest init
 
 거부 / 보류면 아래 step 3 (story 작성) skip.
 
+### eslint-plugin-tailwindcss 설치 확인
+
+```bash
+$ grep -q '"eslint-plugin-tailwindcss"' package.json && echo OK || echo "eslint-plugin-tailwindcss 없음 — 설치 안내"
+```
+
+미설치 시:
+
+```bash
+pnpm add -D eslint-plugin-tailwindcss
+```
+
+그리고 `eslint.config.js` 에 등록 (아래 "5. 검증" 섹션 참고). step 5 lint 강제의 전제 — 미설치면 하드코딩 차단 안 됨.
+
 ## 1. shadcn MCP 로 베이스 설치
 
 ```
