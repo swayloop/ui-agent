@@ -9,6 +9,7 @@
   "files": [
     "dist",
     "templates",
+    "skills",
     "README.md"
   ],
   "scripts": {
