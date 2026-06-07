@@ -7,11 +7,14 @@ export interface TokensOptions {
   in?: string;
   out?: string;
   lint?: boolean;
+  /** `@google/design.md export --format` 값. 검증 없이 그대로 전달 (dtcg / css-tailwind / json-tailwind / tailwind / ...). 기본 `dtcg`. */
+  format?: string;
 }
 
 const PACKAGE = '@google/design.md';
 const DEFAULT_IN = 'design/DESIGN.md';
 const DEFAULT_OUT = 'design/tokens.json';
+const DEFAULT_FORMAT = 'dtcg';
 
 export class TokensError extends Error {
   override name = 'TokensError';
@@ -97,7 +100,8 @@ export async function tokensCommand(options: TokensOptions = {}): Promise<void> 
     if (code !== 0) throw new TokensError(`${PACKAGE} lint 실패`, code);
   }
 
-  const code = await runDesignMdToFile(['export', input, '--format', 'dtcg'], cwd, output);
+  const format = options.format ?? DEFAULT_FORMAT;
+  const code = await runDesignMdToFile(['export', input, '--format', format], cwd, output);
   if (code !== 0) throw new TokensError(`${PACKAGE} export 실패`, code);
 
   console.log(chalk.green(`✓ ${outRel}`));
