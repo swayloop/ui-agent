@@ -2,6 +2,7 @@
 import { Command } from 'commander';
 import chalk from 'chalk';
 import { initCommand } from './commands/init.js';
+import { InstallSkillError, installSkillCommand } from './commands/install-skill.js';
 import { TokensError, tokensCommand } from './commands/tokens.js';
 
 const program = new Command();
@@ -48,5 +49,32 @@ program
       process.exit(1);
     }
   });
+
+program
+  .command('install-skill [name]')
+  .description(
+    'SKILL 을 consumer 의 .agents/skills/ 에 설치 + .claude/skills 디렉토리 심링크 (cross-agent)',
+  )
+  .option('--target <dir>', '설치 대상 (기본 현재 repo root)')
+  .option('--force', '기존 항목 덮어쓰기')
+  .option('--all', '전체 SKILL 설치')
+  .option('--list', '설치 가능한 SKILL 목록만 출력')
+  .action(
+    async (
+      name: string | undefined,
+      options: { target?: string; force?: boolean; all?: boolean; list?: boolean },
+    ) => {
+      try {
+        await installSkillCommand(name, options);
+      } catch (err) {
+        if (err instanceof InstallSkillError) {
+          console.error(chalk.red('✗'), err.message);
+          process.exit(err.exitCode);
+        }
+        console.error(chalk.red('install-skill failed:'), err instanceof Error ? err.message : err);
+        process.exit(1);
+      }
+    },
+  );
 
 await program.parseAsync();
