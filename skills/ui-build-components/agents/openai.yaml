@@ -1,0 +1,7 @@
+interface:
+  display_name: 'ui-build-components'
+  short_description: 'shadcn 베이스 컴포넌트 + Storybook + manifest 작성 시 로드 (워크플로우 step 2)'
+  default_prompt: '$ui-build-components 를 시작해줘.'
+
+policy:
+  allow_implicit_invocation: true
