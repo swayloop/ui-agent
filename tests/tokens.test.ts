@@ -2,19 +2,31 @@ import { EventEmitter } from 'node:events';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { TokensError, tokensCommand } from '../src/commands/tokens.js';
 
-const { spawnMock, accessMock } = vi.hoisted(() => ({
+const { spawnMock, accessMock, mkdirMock, writeFileMock } = vi.hoisted(() => ({
   spawnMock: vi.fn(),
   accessMock: vi.fn(),
+  mkdirMock: vi.fn(),
+  writeFileMock: vi.fn(),
 }));
 
 vi.mock('node:child_process', () => ({ spawn: spawnMock }));
-vi.mock('node:fs/promises', () => ({ access: accessMock }));
+vi.mock('node:fs/promises', () => ({
+  access: accessMock,
+  mkdir: mkdirMock,
+  writeFile: writeFileMock,
+}));
 
-function exitWith(code = 0): () => EventEmitter {
+type MockProc = EventEmitter & { stdout?: EventEmitter };
+
+function exitWith(code = 0, stdout = '{}'): () => MockProc {
   return () => {
-    const ee = new EventEmitter();
-    setImmediate(() => ee.emit('exit', code));
-    return ee;
+    const proc = new EventEmitter() as MockProc;
+    proc.stdout = new EventEmitter();
+    setImmediate(() => {
+      if (stdout) proc.stdout!.emit('data', Buffer.from(stdout));
+      proc.emit('exit', code);
+    });
+    return proc;
   };
 }
 
@@ -34,6 +46,8 @@ describe('tokensCommand', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     accessMock.mockImplementation(makeAccess([]));
+    mkdirMock.mockResolvedValue(undefined);
+    writeFileMock.mockResolvedValue(undefined);
     spawnMock.mockImplementation(exitWith(0));
   });
 
@@ -48,25 +62,34 @@ describe('tokensCommand', () => {
     await expect(tokensCommand({})).rejects.toThrow(/입력 파일 없음/);
   });
 
-  it('기본 경로로 export dtcg 호출', async () => {
+  it('기본 경로로 export 호출 (v0.2.0 시그니처: FILE positional + --format dtcg)', async () => {
     await tokensCommand({});
     expect(spawnMock).toHaveBeenCalledOnce();
     const [cmd, args] = spawnMock.mock.calls[0] as [string, string[]];
     expect(cmd).toBe('npx');
     expect(args[0]).toBe('@google/design.md');
     expect(args[1]).toBe('export');
-    expect(args[2]).toBe('dtcg');
-    expect(args).toContain('--in');
-    expect(args).toContain('--out');
-    expect(args.some((a) => a.endsWith('design/DESIGN.md'))).toBe(true);
-    expect(args.some((a) => a.endsWith('design/tokens.json'))).toBe(true);
+    // FILE 은 positional (args[2])
+    expect(args[2]?.endsWith('design/DESIGN.md')).toBe(true);
+    // --format dtcg
+    const fmtIdx = args.indexOf('--format');
+    expect(fmtIdx).toBeGreaterThan(-1);
+    expect(args[fmtIdx + 1]).toBe('dtcg');
+    // v0.1.x 잔재 없어야 함 (export dtcg ... --in X --out Y)
+    expect(args).not.toContain('--in');
+    expect(args).not.toContain('--out');
+    // stdout → 파일 저장
+    expect(writeFileMock).toHaveBeenCalledOnce();
+    const [outPath] = writeFileMock.mock.calls[0]!;
+    expect(String(outPath).endsWith('design/tokens.json')).toBe(true);
   });
 
-  it('--in / --out 옵션 인자 매핑', async () => {
+  it('--in / --out 옵션 인자 매핑 (in→positional, out→writeFile)', async () => {
     await tokensCommand({ in: 'custom/D.md', out: 'custom/t.json' });
     const [, args] = spawnMock.mock.calls[0] as [string, string[]];
-    expect(args.some((a) => a.endsWith('custom/D.md'))).toBe(true);
-    expect(args.some((a) => a.endsWith('custom/t.json'))).toBe(true);
+    expect(args[2]?.endsWith('custom/D.md')).toBe(true);
+    const [outPath] = writeFileMock.mock.calls[0]!;
+    expect(String(outPath).endsWith('custom/t.json')).toBe(true);
   });
 
   it('--lint 옵션 시 lint 먼저 호출 후 export', async () => {
@@ -86,13 +109,24 @@ describe('tokensCommand', () => {
     expect(err).toBeInstanceOf(TokensError);
     expect((err as TokensError).exitCode).toBe(2);
     expect(spawnMock).toHaveBeenCalledOnce();
+    expect(writeFileMock).not.toHaveBeenCalled();
   });
 
-  it('export 실패 시 exit code 전파', async () => {
+  it('export 실패 시 exit code 전파 + 파일 미생성', async () => {
     spawnMock.mockImplementationOnce(exitWith(3));
     const err = await tokensCommand({}).catch((e) => e);
     expect(err).toBeInstanceOf(TokensError);
     expect((err as TokensError).exitCode).toBe(3);
-    expect((err as TokensError).message).toMatch(/export dtcg 실패/);
+    expect((err as TokensError).message).toMatch(/export 실패/);
+    expect(writeFileMock).not.toHaveBeenCalled();
+  });
+
+  it('export 성공 시 stdout 내용을 그대로 저장', async () => {
+    const payload = '{"$schema":"dtcg","color":{}}';
+    spawnMock.mockImplementationOnce(exitWith(0, payload));
+    await tokensCommand({});
+    expect(writeFileMock).toHaveBeenCalledOnce();
+    const [, body] = writeFileMock.mock.calls[0]!;
+    expect((body as Buffer).toString()).toBe(payload);
   });
 });
