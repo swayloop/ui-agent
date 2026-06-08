@@ -1,22 +1,35 @@
 # Button 컴포넌트 워크플로우 (한 라운드)
 
-UXResearchEngine 의 `frontend/src/theme.css` (Tailwind v4 `@theme`) 기반.
+`design/DESIGN.md` 의 디자인 결정을 Tailwind 클래스로 변환하는 한 라운드.
 
 ## 0. 전제
 
-`theme.css` 가 이미 step 1 (`pnpm ui-agent tokens --format css-tailwind`) 로 생성돼 있음:
+### DESIGN.md — AI 의 판단 근거
 
-```css
-@theme {
-  --color-primary: #0066cc;
-  --color-on-primary: #ffffff;
-  --color-ink: #1d1d1f;
-  --color-canvas: #ffffff;
-  ...
-}
+`design/DESIGN.md` 에서 이번 컴포넌트 관련 토큰 / variant / 원칙 추출. 예 (UXResearchEngine):
+
+```markdown
+## Colors
+
+- primary: #0066cc # 기본 CTA. interactive 한 액션
+- on-primary: #ffffff # primary 위 텍스트
+- ink: #1d1d1f # 본문 텍스트
+- surface-pearl: #fafafc # ghost / 보조 hover 배경
+- ...
+
+## Components
+
+- Button (variant: default | ghost | destructive; size: md | sm)
+  - default: primary 면 + on-primary 텍스트
+  - ghost: 투명, ink 텍스트, surface-pearl hover
+  - destructive: 빨강 계열
 ```
 
-→ Tailwind v4 가 `@theme` 토큰을 자동 인식 → `bg-primary`, `text-on-primary` 같은 유틸 즉시 사용 가능.
+→ AI 가 이 결정 (어떤 토큰 / 어떤 variant / 어떤 상호작용) 을 보고 작업.
+
+### 인프라 — AI 가 직접 만지지 않음
+
+Tailwind 가 인식하는 `@theme` CSS 가 consumer 의 인프라에 있어야 함 (theme.css / index.css / 어디든). step 1 (`pnpm ui-agent tokens --format css-tailwind`) 결과를 쓰거나 consumer 가 직접 관리. AI 는 Tailwind 가 `bg-primary` 같은 클래스를 인식한다는 것만 전제로 함.
 
 ### shadcn MCP 연결 확인 — 현재 에이전트 기준
 
@@ -40,29 +53,33 @@ $ ls .storybook/ 2>/dev/null || grep -q '"@storybook' package.json && echo OK ||
 pnpm dlx storybook@latest init
 ```
 
-거부 / 보류면 아래 step 3 (story 작성) skip.
+거부 / 보류면 아래 step 4 (story 작성) skip.
 
-### eslint-plugin-tailwindcss 설치 확인
+### eslint-plugin-tailwind-v4 설치 확인
 
 ```bash
-$ grep -q '"eslint-plugin-tailwindcss"' package.json && echo OK || echo "eslint-plugin-tailwindcss 없음 — 설치 안내"
+$ grep -q '"eslint-plugin-tailwind-v4"' package.json && echo OK || echo "eslint-plugin-tailwind-v4 없음 — 설치 안내"
 ```
 
 미설치 시:
 
 ```bash
-pnpm add -D eslint-plugin-tailwindcss
+pnpm add -D eslint-plugin-tailwind-v4
 ```
 
-그리고 `eslint.config.js` 에 등록 (아래 "5. 검증" 섹션 참고). step 5 lint 강제의 전제 — 미설치면 하드코딩 차단 안 됨.
+그리고 `eslint.config.js` 에 등록 (아래 "6. 검증" 섹션 참고). step 6 lint 강제의 전제 — 미설치면 하드코딩 차단 안 됨.
 
-## 1. shadcn MCP 로 베이스 설치
+## 1. DESIGN.md 에서 결정 추출
+
+이번 라운드 (Button): primary / on-primary / ink / surface-pearl + 3 variants × 2 sizes.
+
+## 2. shadcn MCP 로 베이스 설치
 
 ```
 shadcn MCP: install button → components/ui/button.tsx
 ```
 
-## 2. 컴포넌트 본문 (theme 토큰 매핑)
+## 3. 컴포넌트 본문 — DESIGN.md 결정을 Tailwind 클래스로
 
 `components/ui/button.tsx`:
 
@@ -75,8 +92,11 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
+        // DESIGN.md → primary + on-primary
         default: 'bg-primary text-on-primary hover:bg-primary-focus',
+        // DESIGN.md → 투명 + ink 텍스트 + surface-pearl hover
         ghost: 'text-ink hover:bg-surface-pearl',
+        // DESIGN.md → destructive
         destructive: 'bg-red-600 text-white hover:bg-red-700',
       },
       size: {
@@ -96,9 +116,9 @@ export function Button({ className, variant, size, ...props }: ButtonProps) {
 }
 ```
 
-→ `bg-primary` / `text-on-primary` 는 `theme.css` 의 `--color-primary` / `--color-on-primary` 로 매핑됨. **arbitrary value 없음**.
+→ DESIGN.md 의 결정 (어떤 토큰) ↔ 클래스 (`bg-primary`, `text-on-primary`) 1:1 매핑. **arbitrary value 없음**.
 
-## 3. Storybook story
+## 4. Storybook story
 
 `components/stories/button.stories.tsx`:
 
@@ -116,7 +136,7 @@ export const Destructive: StoryObj<typeof Button> = {
 };
 ```
 
-## 4. manifest 등록
+## 5. manifest 등록
 
 `components/components.manifest.json` (예시 스키마):
 
@@ -135,31 +155,32 @@ export const Destructive: StoryObj<typeof Button> = {
 }
 ```
 
-## 5. 검증 — `eslint-plugin-tailwindcss` 셋업
+## 6. 검증 — `eslint-plugin-tailwind-v4` 셋업
 
 `eslint.config.js`:
 
 ```js
-import tailwind from 'eslint-plugin-tailwindcss';
+import tailwindV4 from 'eslint-plugin-tailwind-v4';
 
 export default [
-  ...tailwind.configs['flat/recommended'],
   {
+    plugins: { 'tailwind-v4': tailwindV4 },
     rules: {
-      'tailwindcss/no-arbitrary-value': 'error',
-    },
-    settings: {
-      tailwindcss: {
-        callees: ['cn', 'cva', 'clsx'],
-      },
+      'tailwind-v4/no-undefined-classes': [
+        'error',
+        {
+          cssFile: 'src/index.css', // consumer 의 CSS entry. @import 체인 자동 추적
+          allowArbitraryValues: false, // text-[#ff0000] 차단
+        },
+      ],
     },
   },
 ];
 ```
 
-→ `tailwindcss/no-arbitrary-value: error` 가 `text-[#ff0000]` / `p-[13px]` 같은 하드코딩을 error 로 차단. `callees` 로 `cn()`, `cva()` 안의 클래스도 검사.
+→ `tailwind-v4/no-undefined-classes` 가 `cssFile` 에서 시작해 `@import` 체인을 따라가며 정의된 토큰 인식. `cn()` / `cva()` / `clsx()` / `tw()` / `twMerge()` 내부 클래스도 자동 검사. `allowArbitraryValues: false` 가 하드코딩 차단.
 
-## 6. 검증 실행 — pass
+## 7. 검증 실행 — pass
 
 ```bash
 $ pnpm prettier --check components/ui/button.tsx
@@ -171,7 +192,7 @@ $ pnpm eslint components/ui/button.tsx
 
 → pass. 다음 컴포넌트 또는 step 3 (`/ui-design-pages`).
 
-## 7. 검증 실행 — fail 예시
+## 8. 검증 실행 — fail 예시
 
 만약 본문에 하드코딩 색을 썼다면:
 
@@ -183,17 +204,20 @@ default: 'bg-[#0066cc] text-white';
 ```bash
 $ pnpm eslint components/ui/button.tsx
 components/ui/button.tsx
-  6:18  error  Arbitrary value 'bg-[#0066cc]' is not allowed
-                tailwindcss/no-arbitrary-value
+  6:18  error  'bg-[#0066cc]' is an undefined class (arbitrary value not allowed)
+                tailwind-v4/no-undefined-classes
 ```
 
-**수정**: `theme.css` 의 토큰 (`--color-primary`) 을 쓰는 Tailwind 유틸 (`bg-primary`) 로 교체. 토큰에 없는 색이면 `theme.css` (또는 그 source `DESIGN.md`) 부터 갱신 후 step 1 재실행.
+**수정 판단:**
+
+1. 먼저 DESIGN.md 의 결정 확인 — 이 색이 DESIGN.md 에 있는 token 이면 그 token 의 클래스 (예: `bg-primary`) 로 교체
+2. DESIGN.md 에 없으면 **컴포넌트 작성 멈추고 사람 보고** — DESIGN.md 갱신 여부는 디자인 의사결정. SKILL 이 임의로 추가 안 함
 
 → fail 보고 형식 (사람에게):
 
 ```
 ✗ Button 컴포넌트 lint fail
-  - components/ui/button.tsx:6 — bg-[#0066cc] 하드코딩 (tailwindcss/no-arbitrary-value)
-  수정 후보: bg-primary
-  결정 대기 — 진행할지, theme.css 갱신할지
+  - components/ui/button.tsx:6 — bg-[#0066cc] 하드코딩 (tailwind-v4/no-undefined-classes)
+  DESIGN.md 확인: primary (#0066cc) 와 동일 → bg-primary 로 교체 권장
+  결정 대기 — 진행할지, DESIGN.md 갱신할지
 ```
