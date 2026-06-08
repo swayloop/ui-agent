@@ -18,10 +18,10 @@ allowed-tools: Bash, Read, Write
    - **`@storybook/test-runner` + `@storybook/addon-a11y` + `axe-playwright` 설치** (Storybook 있을 때만) — `package.json` dep + `.storybook/test-runner.ts` (preVisit/postVisit 훅) + `npx playwright install chromium` 확인. 없으면 설치 + config 안내 (`references/example.md` 6. 검증 참고)
 1. **DESIGN.md 읽기** — 이번 컴포넌트에 쓸 토큰 (color / typography / spacing / radius) + variant + 디자인 원칙 파악
 2. shadcn MCP 로 베이스 설치 → `components/ui/<name>.tsx`
-3. **베이스 정화 + 토큰 매핑** — shadcn 베이스에는 우리 DESIGN.md 와 무관한 표현이 섞여 옴 (예: `shadow-sm`, `grid-rows-[auto_auto]` 같은 arbitrary value, 기타 표준 shadcn 규칙). 본문 작성 전:
-   - DESIGN.md 가 명시적으로 금지한 표현 (예: "카드에 그림자 금지") 전부 제거
-   - arbitrary value (`-[...]`) 전부 제거 — step 6 lint 에 걸리지만 여기서 미리 정리
-   - 그 후 DESIGN.md 결정한 토큰을 Tailwind 클래스로 매핑 (예: primary → `bg-primary`)
+3. **베이스 정화 + 토큰 매핑** — shadcn 베이스의 디자인 규칙 위반 제거 후 토큰 매핑. 상세 → `references/example.md` step 3:
+   - DESIGN.md 가 금지한 표현 + 디자인 값 하드코딩 arbitrary (`bg-[#hex]` 등) 제거
+   - **carve-out**: 프레임워크 런타임 var (radix 등) 는 유지
+   - DESIGN.md 결정한 토큰을 Tailwind 클래스로 매핑 (예: primary → `bg-primary`)
 4. Storybook story → `components/stories/<name>.stories.tsx`
 5. `components/components.manifest.json` 에 등록 (name · variants · slots · tags)
 6. 검증 (SKILL 절차 안 — 이번 라운드 컴포넌트만 대상, 전체 회귀는 `pnpm verify` 의 몫):
@@ -37,10 +37,6 @@ allowed-tools: Bash, Read, Write
 - 출력: `components/ui/<name>.tsx`, `components/stories/<name>.stories.tsx`, `components/components.manifest.json`
 
 > 참고: Tailwind 가 인식하는 `@theme` CSS (theme.css / index.css / 어디든) 는 consumer 의 인프라. AI 가 직접 만지지 않음 — Tailwind 컴파일러 + lint plugin 이 자동으로 처리.
-
-## 어떻게 (참고)
-
-- **DESIGN.md → 컴포넌트 변환 한 라운드 (Button) + eslint-plugin-better-tailwindcss + test-runner/a11y 셋업** → `references/example.md`
 
 ## 다음
 

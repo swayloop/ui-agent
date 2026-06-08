@@ -72,7 +72,7 @@ $ grep -q '"@storybook/test-runner"' package.json \
   && echo OK || echo "없음 — pnpm add -D @storybook/test-runner @storybook/addon-a11y axe-playwright + .storybook/test-runner.ts + npx playwright install chromium (6. 검증 참고)"
 ```
 
-static 검증 통과해도 런타임에 `cn()` (= `twMerge`) 이 같은 그룹 클래스를 합쳐 떨구는 경우가 있다 (예: `text-on-primary` 색 + `text-body` 크기 → 색 누락). CSS 는 정상 생성, className 만 빠지는 거라 lint/typecheck/build 로 못 잡음 — test-runner 가 stories 를 실제 Chromium 으로 렌더해 axe-core 로 잡음.
+런타임에 `cn()` (= `twMerge`) 이 같은 그룹 클래스 (예: `text-on-primary` 색 + `text-body` 크기) 를 합쳐 떨구는 경우 — CSS 는 정상 생성, className 만 빠져서 static 으로 못 잡음. test-runner 가 헤드리스 Chromium 렌더 + axe 로 잡음.
 
 ## 1. DESIGN.md 에서 결정 추출
 
@@ -89,8 +89,10 @@ shadcn MCP: install button → components/ui/button.tsx
 shadcn 베이스에는 우리 DESIGN.md 와 무관한 표현이 섞여 옴:
 
 - 표준 shadcn 스타일 (예: `shadow-sm`, `border` 기본값) — DESIGN.md 가 명시적으로 금지한 항목이면 제거
-- arbitrary value (예: `grid-rows-[auto_auto]`, `h-[44px]`) — step 6 lint 가 에러로 잡지만 여기서 미리 정리
+- 디자인 값을 하드코딩한 arbitrary (예: `grid-rows-[auto_auto]`, `h-[44px]`, `bg-[#hex]`) — step 6 lint 가 에러로 잡지만 여기서 미리 정리
 - 디자인 원칙 어긋난 표현 (예: 우리는 elevation 대신 border 로 구분한다면 모든 `shadow-*` 제거)
+
+> **carve-out**: 프레임워크가 런타임에 채우는 CSS var 는 기능적 plumbing 이라 **유지**. 예: radix 의 `min-w-[var(--radix-select-trigger-width)]` 를 지우면 Select 드롭다운 너비가 깨진다. 이런 줄은 `// eslint-disable-next-line better-tailwindcss/no-restricted-classes` 로 lint 만 명시적으로 우회 (디자인 값 하드코딩 / 프레임워크 plumbing 을 코드에서 구분).
 
 베이스를 정화한 다음 DESIGN.md 결정을 토큰 클래스로 매핑:
 
@@ -257,6 +259,8 @@ export default config;
   },
 }
 ```
+
+> **한계**: axe 는 `::placeholder` 같은 가상요소 대비를 못 본다 (예: Input placeholder 색 대비 회귀는 게이트 통과). 대비 회귀의 보조 게이트이지 a11y 전반 보증 아님 — 가상요소 / 동적 상태는 사람이 storybook 켜고 확인.
 
 ## 7. 검증 실행 — pass
 
