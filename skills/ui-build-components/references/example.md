@@ -72,7 +72,7 @@ $ grep -q '"@storybook/test-runner"' package.json \
   && echo OK || echo "없음 — pnpm add -D @storybook/test-runner @storybook/addon-a11y axe-playwright + .storybook/test-runner.ts + npx playwright install chromium (6. 검증 참고)"
 ```
 
-static 검증 통과해도 런타임에 `cn()` (= `twMerge`) 이 같은 그룹 클래스를 합쳐 떨구는 경우가 있다 (예: `text-on-primary` 색 + `text-body` 크기 → 색 누락). CSS 는 정상 생성, className 만 빠지는 거라 lint/typecheck/build 로 못 잡음 — test-runner 가 stories 를 실제 Chromium 으로 렌더해 axe-core 로 잡음.
+런타임에 `cn()` (= `twMerge`) 이 같은 그룹 클래스 (예: `text-on-primary` 색 + `text-body` 크기) 를 합쳐 떨구는 경우 — CSS 는 정상 생성, className 만 빠져서 static 으로 못 잡음. test-runner 가 헤드리스 Chromium 렌더 + axe 로 잡음.
 
 ## 1. DESIGN.md 에서 결정 추출
 
