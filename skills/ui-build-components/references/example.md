@@ -84,7 +84,15 @@ static 검증 통과해도 런타임에 `cn()` (= `twMerge`) 이 같은 그룹 �
 shadcn MCP: install button → components/ui/button.tsx
 ```
 
-## 3. 컴포넌트 본문 — DESIGN.md 결정을 Tailwind 클래스로
+## 3. 컴포넌트 본문 — 베이스 정화 + DESIGN.md 결정을 Tailwind 클래스로
+
+shadcn 베이스에는 우리 DESIGN.md 와 무관한 표현이 섞여 옴:
+
+- 표준 shadcn 스타일 (예: `shadow-sm`, `border` 기본값) — DESIGN.md 가 명시적으로 금지한 항목이면 제거
+- arbitrary value (예: `grid-rows-[auto_auto]`, `h-[44px]`) — step 6 lint 가 에러로 잡지만 여기서 미리 정리
+- 디자인 원칙 어긋난 표현 (예: 우리는 elevation 대신 border 로 구분한다면 모든 `shadow-*` 제거)
+
+베이스를 정화한 다음 DESIGN.md 결정을 토큰 클래스로 매핑:
 
 `components/ui/button.tsx`:
 
