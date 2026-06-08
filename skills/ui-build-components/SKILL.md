@@ -21,7 +21,7 @@ allowed-tools: Bash, Read, Write
 3. **베이스 정화 + 토큰 매핑** — shadcn 베이스에는 우리 DESIGN.md 와 무관한 표현이 섞여 옴 (예: `shadow-sm`, `grid-rows-[auto_auto]` 같은 arbitrary value, 기타 표준 shadcn 규칙). 본문 작성 전:
    - DESIGN.md 가 명시적으로 금지한 표현 (예: "카드에 그림자 금지") 전부 제거
    - **디자인 값을 하드코딩한** arbitrary (`bg-[#hex]`, `p-[Npx]` 등) 전부 제거 — step 6 lint 에 걸리지만 여기서 미리 정리
-   - **carve-out**: 프레임워크가 런타임에 채우는 CSS var (예: `min-w-[var(--radix-select-trigger-width)]`, `var(--reach-*)` 등) 는 기능적 plumbing 이라 **유지**. 그 줄만 `// eslint-disable-next-line better-tailwindcss/no-restricted-classes` 명시
+   - **carve-out**: 프레임워크 런타임 var (radix 등) 는 유지 — 상세 `references/example.md` step 3
    - 그 후 DESIGN.md 결정한 토큰을 Tailwind 클래스로 매핑 (예: primary → `bg-primary`)
 4. Storybook story → `components/stories/<name>.stories.tsx`
 5. `components/components.manifest.json` 에 등록 (name · variants · slots · tags)
