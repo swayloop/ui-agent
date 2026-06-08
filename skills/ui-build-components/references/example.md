@@ -63,13 +63,18 @@ $ grep -q '"eslint-plugin-better-tailwindcss"' package.json && echo OK || echo "
 
 `eslint-plugin-tailwind-v4` 는 cva 의 base 문자열만 검사하고 `variants` 객체 안은 무시 (소스: `rules/no-undefined-classes.js` 의 `extractClassNames` 가 `Literal`/`TemplateLiteral` 만 처리). 그래서 `better-tailwindcss` 로 교체.
 
-### @storybook/test-runner + @storybook/addon-a11y 설치 확인 (Storybook 있을 때)
+### @storybook/test-runner + addon-a11y + axe-playwright 설치 확인 (Storybook 있을 때)
 
 ```bash
-$ grep -q '"@storybook/test-runner"' package.json && grep -q '"@storybook/addon-a11y"' package.json && echo OK || echo "없음 — pnpm add -D @storybook/test-runner @storybook/addon-a11y + playwright install (6. 검증 참고)"
+$ grep -q '"@storybook/test-runner"' package.json \
+  && grep -q '"@storybook/addon-a11y"' package.json \
+  && grep -q '"axe-playwright"' package.json \
+  && echo OK || echo "없음 — pnpm add -D @storybook/test-runner @storybook/addon-a11y axe-playwright + .storybook/test-runner.ts + npx playwright install chromium (6. 검증 참고)"
 ```
 
 static 검증 통과해도 런타임에 `cn()` (= `twMerge`) 이 같은 그룹 클래스를 합쳐 떨구는 경우가 있다 (예: `text-on-primary` 색 + `text-body` 크기 → 색 누락). CSS 는 정상 생성, className 만 빠지는 거라 lint/typecheck/build 로 못 잡음 — test-runner 가 stories 를 실제 Chromium 으로 렌더해 axe-core 로 잡음.
+
+> **주의**: `preview.parameters.a11y.test = 'error'` 만으로는 axe 가 안 돈다 (Storybook UI 패널용 설정). test-runner 가 axe 를 실행하려면 `.storybook/test-runner.ts` 의 `preVisit: injectAxe` / `postVisit: checkA11y` 훅이 필요 — `axe-playwright` 패키지 의존. 셋업 누락 시 smoke test (story 렌더 자체) 만 통과하고 a11y 검사 0건.
 
 ## 1. DESIGN.md 에서 결정 추출
 
@@ -195,7 +200,14 @@ export default [
 
 → `entryPoint` 에서 `@import` 체인 따라 토큰 인식. cva / cn / clsx / twMerge / tv 인자 + nested object 까지 검사.
 
-### test-runner + addon-a11y 셋업
+### test-runner + addon-a11y + axe-playwright 셋업
+
+설치:
+
+```bash
+pnpm add -D @storybook/test-runner @storybook/addon-a11y axe-playwright
+npx playwright install chromium
+```
 
 `.storybook/main.ts`:
 
@@ -210,20 +222,24 @@ const config: StorybookConfig = {
 export default config;
 ```
 
-`.storybook/preview.ts`:
+`.storybook/test-runner.ts` — **실제 axe 트리거**:
 
 ```ts
-import type { Preview } from '@storybook/react';
+import { injectAxe, checkA11y } from 'axe-playwright';
+import type { TestRunnerConfig } from '@storybook/test-runner';
 
-const preview: Preview = {
-  parameters: {
-    a11y: {
-      // axe 위반을 test-runner 에서 error 로 (default 는 warning)
-      test: 'error',
-    },
+const config: TestRunnerConfig = {
+  async preVisit(page) {
+    await injectAxe(page);
+  },
+  async postVisit(page) {
+    await checkA11y(page, '#storybook-root', {
+      detailedReport: true,
+      detailedReportOptions: { html: true },
+    });
   },
 };
-export default preview;
+export default config;
 ```
 
 `package.json` script:
@@ -235,8 +251,6 @@ export default preview;
   },
 }
 ```
-
-> 한계: axe 가 잡는 건 a11y 룰 (대비 / ARIA / focusable) 뿐. 시각만 어색한 회귀 (padding 누락, variant 가 default 와 동일하게 보임) 는 못 잡음 → 사람이 storybook 켜고 확인.
 
 ## 7. 검증 실행 — pass
 
