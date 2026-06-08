@@ -74,8 +74,6 @@ $ grep -q '"@storybook/test-runner"' package.json \
 
 static 검증 통과해도 런타임에 `cn()` (= `twMerge`) 이 같은 그룹 클래스를 합쳐 떨구는 경우가 있다 (예: `text-on-primary` 색 + `text-body` 크기 → 색 누락). CSS 는 정상 생성, className 만 빠지는 거라 lint/typecheck/build 로 못 잡음 — test-runner 가 stories 를 실제 Chromium 으로 렌더해 axe-core 로 잡음.
 
-> **주의**: `preview.parameters.a11y.test = 'error'` 만으로는 axe 가 안 돈다 (Storybook UI 패널용 설정). test-runner 가 axe 를 실행하려면 `.storybook/test-runner.ts` 의 `preVisit: injectAxe` / `postVisit: checkA11y` 훅이 필요 — `axe-playwright` 패키지 의존. 셋업 누락 시 smoke test (story 렌더 자체) 만 통과하고 a11y 검사 0건.
-
 ## 1. DESIGN.md 에서 결정 추출
 
 이번 라운드 (Button): primary / on-primary / ink / surface-pearl + 3 variants × 2 sizes.
