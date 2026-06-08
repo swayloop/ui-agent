@@ -23,7 +23,7 @@ allowed-tools: Bash, Read, Write
    - **carve-out**: 프레임워크 런타임 var (radix 등) 는 유지
    - DESIGN.md 결정한 토큰을 Tailwind 클래스로 매핑 (예: primary → `bg-primary`)
 4. Storybook story → `components/stories/<name>.stories.tsx`
-5. `components/components.manifest.json` 에 등록 (name · variants · slots · tags)
+5. `components/ui/<name>.manifest.json` 작성 (name · variants · slots · tags) — 컴포넌트 옆에 분산 저장 (병렬 작업 충돌 회피). 집계는 별도 도구의 몫
 6. 검증 (SKILL 절차 안 — 이번 라운드 컴포넌트만 대상, 전체 회귀는 `pnpm verify` 의 몫):
    - `pnpm prettier --check <대상>`
    - `pnpm eslint <대상>` — `better-tailwindcss/no-unknown-classes` (미정의 토큰 차단) + `no-restricted-classes` (arbitrary value 차단)
@@ -34,7 +34,7 @@ allowed-tools: Bash, Read, Write
 ## 입력 / 출력
 
 - 입력: `design/DESIGN.md` (AI 의 판단 source), 제작할 컴포넌트
-- 출력: `components/ui/<name>.tsx`, `components/stories/<name>.stories.tsx`, `components/components.manifest.json`
+- 출력: `components/ui/<name>.tsx`, `components/stories/<name>.stories.tsx`, `components/ui/<name>.manifest.json`
 
 > 참고: Tailwind 가 인식하는 `@theme` CSS (theme.css / index.css / 어디든) 는 consumer 의 인프라. AI 가 직접 만지지 않음 — Tailwind 컴파일러 + lint plugin 이 자동으로 처리.
 
