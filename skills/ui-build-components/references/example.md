@@ -151,24 +151,22 @@ export const Destructive: StoryObj<typeof Button> = {
 };
 ```
 
-## 5. manifest 등록
+## 5. manifest 작성
 
-`components/components.manifest.json` (예시 스키마):
+`components/ui/button.manifest.json` (컴포넌트 옆에 분산 저장 — 병렬 작업 충돌 회피):
 
 ```json
 {
-  "components": [
-    {
-      "name": "Button",
-      "path": "components/ui/button.tsx",
-      "variants": ["default", "ghost", "destructive"],
-      "sizes": ["md", "sm"],
-      "slots": [],
-      "tags": ["interactive", "cta"]
-    }
-  ]
+  "name": "Button",
+  "path": "components/ui/button.tsx",
+  "variants": ["default", "ghost", "destructive"],
+  "sizes": ["md", "sm"],
+  "slots": [],
+  "tags": ["interactive", "cta"]
 }
 ```
+
+→ 한 컴포넌트당 한 파일. 전체 집계 (`components.manifest.json` 생성 등) 는 별도 도구의 몫.
 
 ## 6. 검증 — `eslint-plugin-better-tailwindcss` 셋업
 
