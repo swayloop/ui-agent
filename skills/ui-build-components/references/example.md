@@ -58,16 +58,18 @@ pnpm dlx storybook@latest init
 ### eslint-plugin-better-tailwindcss 설치 확인
 
 ```bash
-$ grep -q '"eslint-plugin-better-tailwindcss"' package.json && echo OK || echo "eslint-plugin-better-tailwindcss 없음 — 설치 안내"
+$ grep -q '"eslint-plugin-better-tailwindcss"' package.json && echo OK || echo "없음 — pnpm add -D eslint-plugin-better-tailwindcss + config (6. 검증 참고)"
 ```
 
-미설치 시:
+`eslint-plugin-tailwind-v4` 는 cva 의 base 문자열만 검사하고 `variants` 객체 안은 무시 (소스: `rules/no-undefined-classes.js` 의 `extractClassNames` 가 `Literal`/`TemplateLiteral` 만 처리). 그래서 `better-tailwindcss` 로 교체.
+
+### @storybook/test-runner + @storybook/addon-a11y 설치 확인 (Storybook 있을 때)
 
 ```bash
-pnpm add -D eslint-plugin-better-tailwindcss
+$ grep -q '"@storybook/test-runner"' package.json && grep -q '"@storybook/addon-a11y"' package.json && echo OK || echo "없음 — pnpm add -D @storybook/test-runner @storybook/addon-a11y + playwright install (6. 검증 참고)"
 ```
 
-그리고 `eslint.config.js` 에 등록 (아래 "6. 검증" 섹션 참고). step 6 lint 강제의 전제 — 미설치면 cva variants 안 하드코딩이 안 잡힘.
+static 검증 통과해도 런타임에 `cn()` (= `twMerge`) 이 같은 그룹 클래스를 합쳐 떨구는 경우가 있다 (예: `text-on-primary` 색 + `text-body` 크기 → 색 누락). CSS 는 정상 생성, className 만 빠지는 거라 lint/typecheck/build 로 못 잡음 — test-runner 가 stories 를 실제 Chromium 으로 렌더해 axe-core 로 잡음.
 
 ## 1. DESIGN.md 에서 결정 추출
 
@@ -116,9 +118,7 @@ export function Button({ className, variant, size, ...props }: ButtonProps) {
 }
 ```
 
-→ DESIGN.md 의 결정 (어떤 토큰) ↔ 클래스 (`bg-primary`, `text-on-primary`) 1:1 매핑. **arbitrary value 없음**.
-
-> destructive 의 경우 DESIGN.md 에 `danger` 토큰이 없다면 컴포넌트 작성을 멈추고 사람에게 DESIGN.md 갱신 여부를 물어야 한다. SKILL 이 임시 `bg-red-600` 으로 대체하지 않음.
+→ DESIGN.md 의 결정 (어떤 토큰) ↔ 클래스 (`bg-primary`, `text-on-primary`) 1:1 매핑. **arbitrary value 없음**. DESIGN.md 에 없는 토큰 (예: `danger`) 이 필요하면 작성 멈추고 사람 보고 (fail 처리는 8 섹션).
 
 ## 4. Storybook story
 
@@ -193,7 +193,50 @@ export default [
 ];
 ```
 
-→ `better-tailwindcss/no-unknown-classes` 가 `entryPoint` 에서 시작해 `@import` 체인을 따라가며 정의된 토큰 인식. cva / cn / clsx / twMerge / tv 의 인자를 모두 검사 — **cva 의 `variants` 객체 안 nested 클래스도 포함**. `no-restricted-classes` 의 정규식이 `-[...]` 형태 arbitrary 값을 추가로 차단.
+→ `entryPoint` 에서 `@import` 체인 따라 토큰 인식. cva / cn / clsx / twMerge / tv 인자 + nested object 까지 검사.
+
+### test-runner + addon-a11y 셋업
+
+`.storybook/main.ts`:
+
+```ts
+import type { StorybookConfig } from '@storybook/react-vite';
+
+const config: StorybookConfig = {
+  stories: ['../src/components/stories/**/*.stories.@(ts|tsx)'],
+  addons: ['@storybook/addon-a11y'],
+  framework: { name: '@storybook/react-vite', options: {} },
+};
+export default config;
+```
+
+`.storybook/preview.ts`:
+
+```ts
+import type { Preview } from '@storybook/react';
+
+const preview: Preview = {
+  parameters: {
+    a11y: {
+      // axe 위반을 test-runner 에서 error 로 (default 는 warning)
+      test: 'error',
+    },
+  },
+};
+export default preview;
+```
+
+`package.json` script:
+
+```jsonc
+{
+  "scripts": {
+    "test-storybook": "test-storybook",
+  },
+}
+```
+
+> 한계: axe 가 잡는 건 a11y 룰 (대비 / ARIA / focusable) 뿐. 시각만 어색한 회귀 (padding 누락, variant 가 default 와 동일하게 보임) 는 못 잡음 → 사람이 storybook 켜고 확인.
 
 ## 7. 검증 실행 — pass
 
@@ -203,6 +246,12 @@ All matched files use Prettier code style!
 
 $ pnpm eslint components/ui/button.tsx
 # (출력 없음 = 통과)
+
+$ pnpm test-storybook components/stories/button.stories.tsx
+PASS  Default
+PASS  Ghost
+PASS  Destructive
+Test Suites: 1 passed, 1 total
 ```
 
 → pass. 다음 컴포넌트 또는 step 3 (`/ui-design-pages`).
@@ -246,4 +295,29 @@ components/ui/button.tsx
   DESIGN.md 확인: primary(#0066cc) 와 동일 → bg-primary 로 교체 권장
   VARIANTBAD 는 DESIGN.md 에 없음 → 갱신 여부 결정 필요
   결정 대기 — 진행할지, DESIGN.md 갱신할지
+```
+
+### a11y fail 예시 — 런타임 className 누락
+
+eslint pass 인데도 런타임에 `cn()` 이 `text-on-primary` 를 떨궈 흰 글자가 사라진 경우:
+
+```bash
+$ pnpm test-storybook components/stories/button.stories.tsx
+FAIL  Default
+  Expected 0 a11y violations but received 1:
+  - color-contrast: Element has insufficient color contrast of 2.43 (foreground: #1d1d1f, background: #0066cc, expected: 4.5)
+    <button class="... bg-primary text-body">Click</button>
+
+Test Suites: 1 failed, 1 total
+```
+
+→ fail 보고 형식:
+
+```
+✗ Button 컴포넌트 a11y fail
+  - Default story — color-contrast 2.43 (4.5 필요)
+  - 추정 원인: text-on-primary 가 런타임에 누락 → ink 색 (#1d1d1f) 으로 렌더
+  - 점검: cn() / twMerge() 가 같은 그룹 (text-*) 클래스를 합쳐 떨궜는지 확인
+  - 수정 후보: 컨슈머 `lib/utils.ts` 의 `extendTailwindMerge` 로 typography 토큰 분리
+  결정 대기 — 컨슈머 측 cn() 정의 수정 여부
 ```
