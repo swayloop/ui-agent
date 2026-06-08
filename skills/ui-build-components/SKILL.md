@@ -15,7 +15,7 @@ allowed-tools: Bash, Read, Write
    - **shadcn MCP 연결** — 본인 도구 목록에 shadcn 관련 있는지. 없으면 연결 가이드 안내
    - **Storybook 설치** — `.storybook/` 또는 `package.json` 의 `@storybook/*`. 없으면 `pnpm dlx storybook@latest init` 안내. 거부 / 보류 시 step 4 (story) + step 6 의 test-runner skip
    - **`eslint-plugin-better-tailwindcss` 설치** — `package.json` dep + `eslint.config.js` 등록 확인. 없으면 설치 + config 안내 (`references/example.md` 6. 검증 참고)
-   - **`@storybook/test-runner` + `@storybook/addon-a11y` + `axe-playwright` 설치** (Storybook 있을 때만) — `package.json` dep + `.storybook/test-runner.ts` (preVisit/postVisit 훅) + `npx playwright install chromium` 확인. 없으면 설치 + config 안내 (`references/example.md` 6. 검증 참고). **주의: `preview.parameters.a11y` 는 Storybook UI 패널용이고 test-runner 의 axe 트리거가 아님. `.storybook/test-runner.ts` 의 `injectAxe`/`checkA11y` 훅이 빠지면 a11y 검사 0건 (smoke 만 통과)**
+   - **`@storybook/test-runner` + `@storybook/addon-a11y` + `axe-playwright` 설치** (Storybook 있을 때만) — `package.json` dep + `.storybook/test-runner.ts` (preVisit/postVisit 훅) + `npx playwright install chromium` 확인. 없으면 설치 + config 안내 (`references/example.md` 6. 검증 참고)
 1. **DESIGN.md 읽기** — 이번 컴포넌트에 쓸 토큰 (color / typography / spacing / radius) + variant + 디자인 원칙 파악
 2. shadcn MCP 로 베이스 설치 → `components/ui/<name>.tsx`
 3. DESIGN.md 에서 결정한 토큰을 Tailwind 클래스로 매핑해 컴포넌트 본문 작성 (예: DESIGN.md 의 primary 색 → `bg-primary`)
