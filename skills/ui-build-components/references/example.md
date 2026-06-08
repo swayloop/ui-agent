@@ -55,19 +55,19 @@ pnpm dlx storybook@latest init
 
 거부 / 보류면 아래 step 4 (story 작성) skip.
 
-### eslint-plugin-tailwind-v4 설치 확인
+### eslint-plugin-better-tailwindcss 설치 확인
 
 ```bash
-$ grep -q '"eslint-plugin-tailwind-v4"' package.json && echo OK || echo "eslint-plugin-tailwind-v4 없음 — 설치 안내"
+$ grep -q '"eslint-plugin-better-tailwindcss"' package.json && echo OK || echo "eslint-plugin-better-tailwindcss 없음 — 설치 안내"
 ```
 
 미설치 시:
 
 ```bash
-pnpm add -D eslint-plugin-tailwind-v4
+pnpm add -D eslint-plugin-better-tailwindcss
 ```
 
-그리고 `eslint.config.js` 에 등록 (아래 "6. 검증" 섹션 참고). step 6 lint 강제의 전제 — 미설치면 하드코딩 차단 안 됨.
+그리고 `eslint.config.js` 에 등록 (아래 "6. 검증" 섹션 참고). step 6 lint 강제의 전제 — 미설치면 cva variants 안 하드코딩이 안 잡힘.
 
 ## 1. DESIGN.md 에서 결정 추출
 
@@ -96,8 +96,8 @@ const buttonVariants = cva(
         default: 'bg-primary text-on-primary hover:bg-primary-focus',
         // DESIGN.md → 투명 + ink 텍스트 + surface-pearl hover
         ghost: 'text-ink hover:bg-surface-pearl',
-        // DESIGN.md → destructive
-        destructive: 'bg-red-600 text-white hover:bg-red-700',
+        // DESIGN.md → destructive (예: danger 토큰이 정의되어 있을 때)
+        destructive: 'bg-danger text-on-danger hover:bg-danger-focus',
       },
       size: {
         md: 'h-10 px-4 text-sm',
@@ -117,6 +117,8 @@ export function Button({ className, variant, size, ...props }: ButtonProps) {
 ```
 
 → DESIGN.md 의 결정 (어떤 토큰) ↔ 클래스 (`bg-primary`, `text-on-primary`) 1:1 매핑. **arbitrary value 없음**.
+
+> destructive 의 경우 DESIGN.md 에 `danger` 토큰이 없다면 컴포넌트 작성을 멈추고 사람에게 DESIGN.md 갱신 여부를 물어야 한다. SKILL 이 임시 `bg-red-600` 으로 대체하지 않음.
 
 ## 4. Storybook story
 
@@ -155,22 +157,35 @@ export const Destructive: StoryObj<typeof Button> = {
 }
 ```
 
-## 6. 검증 — `eslint-plugin-tailwind-v4` 셋업
+## 6. 검증 — `eslint-plugin-better-tailwindcss` 셋업
 
 `eslint.config.js`:
 
 ```js
-import tailwindV4 from 'eslint-plugin-tailwind-v4';
+import betterTailwindcss from 'eslint-plugin-better-tailwindcss';
 
 export default [
   {
-    plugins: { 'tailwind-v4': tailwindV4 },
+    plugins: { 'better-tailwindcss': betterTailwindcss },
+    settings: {
+      'better-tailwindcss': {
+        // consumer 의 CSS entry. @import 체인 따라 @theme 토큰 인식
+        entryPoint: 'src/index.css',
+      },
+    },
     rules: {
-      'tailwind-v4/no-undefined-classes': [
+      // DESIGN.md / @theme 에 없는 토큰 차단 (cva variants 안 nested 클래스 포함)
+      'better-tailwindcss/no-unknown-classes': 'error',
+      // arbitrary value (text-[#ff0000] / p-[13px]) 차단
+      'better-tailwindcss/no-restricted-classes': [
         'error',
         {
-          cssFile: 'src/index.css', // consumer 의 CSS entry. @import 체인 자동 추적
-          allowArbitraryValues: false, // text-[#ff0000] 차단
+          restrict: [
+            {
+              pattern: '\\[([^\\[\\]]*?)\\](?!:)',
+              message: 'arbitrary value 금지 — DESIGN.md 토큰을 쓰거나 사람 결정 대기',
+            },
+          ],
         },
       ],
     },
@@ -178,7 +193,7 @@ export default [
 ];
 ```
 
-→ `tailwind-v4/no-undefined-classes` 가 `cssFile` 에서 시작해 `@import` 체인을 따라가며 정의된 토큰 인식. `cn()` / `cva()` / `clsx()` / `tw()` / `twMerge()` 내부 클래스도 자동 검사. `allowArbitraryValues: false` 가 하드코딩 차단.
+→ `better-tailwindcss/no-unknown-classes` 가 `entryPoint` 에서 시작해 `@import` 체인을 따라가며 정의된 토큰 인식. cva / cn / clsx / twMerge / tv 의 인자를 모두 검사 — **cva 의 `variants` 객체 안 nested 클래스도 포함**. `no-restricted-classes` 의 정규식이 `-[...]` 형태 arbitrary 값을 추가로 차단.
 
 ## 7. 검증 실행 — pass
 
@@ -194,30 +209,41 @@ $ pnpm eslint components/ui/button.tsx
 
 ## 8. 검증 실행 — fail 예시
 
-만약 본문에 하드코딩 색을 썼다면:
+만약 cva variants 안에 하드코딩 색을 썼다면:
 
 ```tsx
-// 잘못된 예 — 하드코딩
-default: 'bg-[#0066cc] text-white';
+// 잘못된 예 — cva variants 안 하드코딩
+const buttonVariants = cva('inline-flex items-center', {
+  variants: {
+    variant: {
+      default: 'bg-VARIANTBAD',
+      destructive: 'bg-[#0066cc]',
+    },
+  },
+});
 ```
 
 ```bash
 $ pnpm eslint components/ui/button.tsx
 components/ui/button.tsx
-  6:18  error  'bg-[#0066cc]' is an undefined class (arbitrary value not allowed)
-                tailwind-v4/no-undefined-classes
+   5:18  error  'bg-VARIANTBAD' is not a known tailwind class
+                 better-tailwindcss/no-unknown-classes
+   6:22  error  arbitrary value 금지 — DESIGN.md 토큰을 쓰거나 사람 결정 대기
+                 better-tailwindcss/no-restricted-classes
 ```
 
 **수정 판단:**
 
-1. 먼저 DESIGN.md 의 결정 확인 — 이 색이 DESIGN.md 에 있는 token 이면 그 token 의 클래스 (예: `bg-primary`) 로 교체
+1. 먼저 DESIGN.md 의 결정 확인 — 해당 색이 DESIGN.md 에 있는 token 이면 그 token 의 클래스 (예: `bg-primary`) 로 교체
 2. DESIGN.md 에 없으면 **컴포넌트 작성 멈추고 사람 보고** — DESIGN.md 갱신 여부는 디자인 의사결정. SKILL 이 임의로 추가 안 함
 
 → fail 보고 형식 (사람에게):
 
 ```
 ✗ Button 컴포넌트 lint fail
-  - components/ui/button.tsx:6 — bg-[#0066cc] 하드코딩 (tailwind-v4/no-undefined-classes)
-  DESIGN.md 확인: primary (#0066cc) 와 동일 → bg-primary 로 교체 권장
+  - components/ui/button.tsx:5 — cva variants 안 bg-VARIANTBAD (no-unknown-classes)
+  - components/ui/button.tsx:6 — cva variants 안 bg-[#0066cc] arbitrary (no-restricted-classes)
+  DESIGN.md 확인: primary(#0066cc) 와 동일 → bg-primary 로 교체 권장
+  VARIANTBAD 는 DESIGN.md 에 없음 → 갱신 여부 결정 필요
   결정 대기 — 진행할지, DESIGN.md 갱신할지
 ```
