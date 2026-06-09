@@ -10,9 +10,10 @@ allowed-tools: Bash, Read, Write, Agent
 
 ## 어떻게 (참고)
 
-- **메인 에이전트 절차** (사전 확인 / 컴포넌트 목록 / sub-agent 분배 / 검증 셋업 / pass·fail) → `references/example.md`
-- **워커 sub-agent 절차** (1 컴포넌트 — CLI fetch / 정화 / 토큰 매핑 / story / manifest) → `references/worker-flow.md`
-- **워커 산출 예시** (Button 의 .tsx / .stories.tsx / .manifest.json) → `references/worker-example.md`
+| 역할                                        | 절차                        | 코드/예시                      |
+| ------------------------------------------- | --------------------------- | ------------------------------ |
+| **메인 에이전트** (사전 확인 → 분배 → 검증) | `references/main-flow.md`   | `references/main-example.md`   |
+| **워커 sub-agent** (1 컴포넌트 빌드)        | `references/worker-flow.md` | `references/worker-example.md` |
 
 ## 다음
 

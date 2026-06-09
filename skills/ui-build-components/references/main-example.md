@@ -1,18 +1,18 @@
-# 메인 에이전트 워크플로우 예시
+# 메인 에이전트 예시
 
-`DESIGN.md` → sub-agent 분배 → 검증 1회. 워커 절차는 `worker-flow.md`.
+`main-flow.md` 절차의 각 단계에 대응되는 실제 명령 / 코드 / 보고 형식.
 
-## 0. 사전 확인
+## 0. 사전 확인 — 명령
 
 ```bash
 # DESIGN.md 위치
 $ find . -name DESIGN.md -not -path '*/node_modules/*'
 ./frontend/DESIGN.md
 
-# shadcn CLI (샌드박스면 ui.shadcn.com / registry.npmjs.org allowlist 필요)
+# shadcn CLI
 $ pnpm dlx shadcn --version
 
-# Storybook + 검증 도구
+# 검증 도구 dep
 $ grep -E '"(@storybook/test-runner|@storybook/addon-a11y|axe-playwright|eslint-plugin-better-tailwindcss)"' package.json
 ```
 
@@ -24,15 +24,9 @@ pnpm add -D eslint-plugin-better-tailwindcss \
 npx playwright install chromium
 ```
 
-`eslint-plugin-tailwind-v4` 는 cva variants 안을 검사 못 함 → `better-tailwindcss` 로. test-runner 는 런타임 `cn()` (= `twMerge`) 이 같은 그룹 클래스 합쳐 떨구는 회귀 (대비 불량 등) 를 잡음 — static 검증 으로는 못 잡는 영역. 셋업 코드는 아래 3 절.
+> `eslint-plugin-tailwind-v4` 는 cva variants 안을 검사 못 함 → `better-tailwindcss` 로. test-runner 는 런타임 `cn()` (= `twMerge`) 이 같은 그룹 클래스 합쳐 떨구는 회귀 (대비 불량 등) 를 잡음 — static 검증 으로는 못 잡는 영역.
 
-## 1. 컴포넌트 목록 결정
-
-이번 라운드 (예시): `Button`, `Card`, `Input`. DESIGN.md 의 `## Components` 절 추출 + 사람 확정.
-
-## 2. sub-agent 분배 (병렬)
-
-컴포넌트마다 워커 호출 — 세 워커 동시 실행:
+## 2. sub-agent 분배 — Agent 호출 형태
 
 ```
 Agent(prompt="
@@ -41,12 +35,10 @@ Agent(prompt="
   - DESIGN.md: ./frontend/DESIGN.md
   검증 안 함. 출력: components/ui/button.tsx + button.stories.tsx + button.manifest.json
 ")
-# Card, Input 도 동일 형태
+# Card, Input 도 동일 형태 — 병렬
 ```
 
-워커가 결정 사항 (DESIGN.md 에 없는 토큰 등) 만나면 메인으로 escalate — 워커가 임의 결정 안 함.
-
-## 3. 검증 셋업
+## 3. 검증 셋업 코드
 
 ### eslint.config.js
 
@@ -115,8 +107,6 @@ export default config;
 { "scripts": { "test-storybook": "test-storybook" } }
 ```
 
-> 한계: axe 는 `::placeholder` 같은 가상요소 대비를 못 잡음. 대비 회귀의 보조 게이트일 뿐 a11y 전반 보증 아님 — 가상요소 / 동적 상태는 사람이 storybook 켜고 확인.
-
 ## 4. 검증 실행 — pass
 
 ```bash
@@ -124,8 +114,6 @@ $ pnpm prettier --check components/ui components/stories  # All matched files us
 $ pnpm eslint components/ui components/stories            # (출력 없음 = 통과)
 $ pnpm test-storybook                                     # PASS Button > Default ... 3 passed
 ```
-
-→ 다음 단계.
 
 ## 5. 검증 실행 — fail 보고 형식
 
