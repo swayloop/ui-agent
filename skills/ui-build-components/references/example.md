@@ -1,12 +1,19 @@
 # Button 컴포넌트 워크플로우 (한 라운드)
 
-`design/DESIGN.md` 의 디자인 결정을 Tailwind 클래스로 변환하는 한 라운드.
+`DESIGN.md` (consumer repo 안 위치 가변 — UXResearchEngine 의 경우 `frontend/DESIGN.md`) 의 디자인 결정을 Tailwind 클래스로 변환하는 한 라운드.
 
 ## 0. 전제
 
 ### DESIGN.md — AI 의 판단 근거
 
-`design/DESIGN.md` 에서 이번 컴포넌트 관련 토큰 / variant / 원칙 추출. 예 (UXResearchEngine):
+먼저 위치 발견:
+
+```bash
+$ find . -name DESIGN.md -not -path '*/node_modules/*'
+./frontend/DESIGN.md
+```
+
+→ 못 찾으면 사람에게 경로 묻기. 찾은 `DESIGN.md` 에서 이번 컴포넌트 관련 토큰 / variant / 원칙 추출. 예 (UXResearchEngine):
 
 ```markdown
 ## Colors
