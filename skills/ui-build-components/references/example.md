@@ -1,6 +1,6 @@
-# 메인 에이전트 예시
+# 전체 워크플로우 예시 (Button 한 라운드)
 
-`main-flow.md` 절차의 각 단계에 대응되는 실제 명령 / 코드 / 보고 형식.
+메인 사전 확인 → sub-agent 분배 → 워커 산출 → 메인 검증 까지 한 흐름.
 
 ## 0. 사전 확인 — 명령
 
@@ -24,7 +24,29 @@ pnpm add -D eslint-plugin-better-tailwindcss \
 npx playwright install chromium
 ```
 
-> `eslint-plugin-tailwind-v4` 는 cva variants 안을 검사 못 함 → `better-tailwindcss` 로. test-runner 는 런타임 `cn()` (= `twMerge`) 이 같은 그룹 클래스 합쳐 떨구는 회귀 (대비 불량 등) 를 잡음 — static 검증 으로는 못 잡는 영역.
+> `eslint-plugin-tailwind-v4` 는 cva variants 안을 검사 못 함 → `better-tailwindcss` 로. test-runner 는 런타임 `cn()` (= `twMerge`) 이 같은 그룹 클래스 합쳐 떨구는 회귀 (대비 불량 등) 를 잡음.
+
+## 1. 컴포넌트 목록 결정
+
+DESIGN.md 발췌:
+
+```markdown
+## Colors
+
+- primary: #0066cc # 기본 CTA. interactive 한 액션
+- on-primary: #ffffff # primary 위 텍스트
+- ink: #1d1d1f # 본문 텍스트
+- surface-pearl: #fafafc # ghost / 보조 hover 배경
+
+## Components
+
+- Button (variant: default | ghost | destructive; size: md | sm)
+  - default: primary 면 + on-primary 텍스트
+  - ghost: 투명, ink 텍스트, surface-pearl hover
+  - destructive: 빨강 계열
+```
+
+이번 라운드: `Button` (실제로는 N개 병렬 분배 — 여기선 Button 하나로 흐름 시연).
 
 ## 2. sub-agent 분배 — Agent 호출 형태
 
@@ -35,10 +57,79 @@ Agent(prompt="
   - DESIGN.md: ./frontend/DESIGN.md
   검증 안 함. 출력: components/ui/button.tsx + button.stories.tsx + button.manifest.json
 ")
-# Card, Input 도 동일 형태 — 병렬
 ```
 
-## 3. 검증 셋업 코드
+워커가 결정 사항 (DESIGN.md 에 없는 토큰 / 권한 등) 만나면 메인으로 escalate.
+
+## 3. 워커 산출 (Button)
+
+### components/ui/button.tsx
+
+```tsx
+import { cva, type VariantProps } from 'class-variance-authority';
+import { cn } from '@/lib/utils';
+
+const buttonVariants = cva(
+  'inline-flex items-center justify-center rounded-md font-medium transition-colors disabled:opacity-50',
+  {
+    variants: {
+      variant: {
+        // DESIGN.md → primary + on-primary
+        default: 'bg-primary text-on-primary hover:bg-primary-focus',
+        // DESIGN.md → 투명 + ink 텍스트 + surface-pearl hover
+        ghost: 'text-ink hover:bg-surface-pearl',
+        // DESIGN.md → destructive (danger 토큰 정의되어 있을 때)
+        destructive: 'bg-danger text-on-danger hover:bg-danger-focus',
+      },
+      size: {
+        md: 'h-10 px-4 text-sm',
+        sm: 'h-8 px-3 text-xs',
+      },
+    },
+    defaultVariants: { variant: 'default', size: 'md' },
+  },
+);
+
+export interface ButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>, VariantProps<typeof buttonVariants> {}
+
+export function Button({ className, variant, size, ...props }: ButtonProps) {
+  return <button className={cn(buttonVariants({ variant, size }), className)} {...props} />;
+}
+```
+
+→ DESIGN.md 결정 ↔ 클래스 1:1 매핑. **arbitrary value 없음**.
+
+### components/stories/button.stories.tsx
+
+```tsx
+import type { Meta, StoryObj } from '@storybook/react';
+import { Button } from '../ui/button';
+
+const meta: Meta<typeof Button> = { component: Button };
+export default meta;
+
+export const Default: StoryObj<typeof Button> = { args: { children: 'Click' } };
+export const Ghost: StoryObj<typeof Button> = { args: { variant: 'ghost', children: 'Ghost' } };
+export const Destructive: StoryObj<typeof Button> = {
+  args: { variant: 'destructive', children: 'Delete' },
+};
+```
+
+### components/ui/button.manifest.json
+
+```json
+{
+  "name": "Button",
+  "path": "components/ui/button.tsx",
+  "variants": ["default", "ghost", "destructive"],
+  "sizes": ["md", "sm"],
+  "slots": [],
+  "tags": ["interactive", "cta"]
+}
+```
+
+## 4. 검증 셋업 코드 (메인 1회 트리거 전 인프라)
 
 ### eslint.config.js
 
@@ -107,7 +198,9 @@ export default config;
 { "scripts": { "test-storybook": "test-storybook" } }
 ```
 
-## 4. 검증 실행 — pass
+## 5. 검증 실행 — pass
+
+모든 워커 끝난 후 메인이 1회 트리거:
 
 ```bash
 $ pnpm prettier --check components/ui components/stories  # All matched files use Prettier code style!
@@ -115,7 +208,9 @@ $ pnpm eslint components/ui components/stories            # (출력 없음 = 통
 $ pnpm test-storybook                                     # PASS Button > Default ... 3 passed
 ```
 
-## 5. 검증 실행 — fail 보고 형식
+→ 다음 단계.
+
+## 6. 검증 실행 — fail 보고 형식
 
 ### lint fail — cva variants 안 하드코딩
 
@@ -139,3 +234,5 @@ eslint pass 인데 런타임에 `cn()` 이 `text-on-primary` 떨궈 흰 글자 �
   - 수정 후보: 컨슈머 lib/utils.ts 의 extendTailwindMerge 로 typography 토큰 분리
   결정 대기 — 컨슈머 측 cn() 정의 수정 여부
 ```
+
+> 한계: axe 는 `::placeholder` 같은 가상요소 대비를 못 잡음. 대비 회귀의 보조 게이트일 뿐 a11y 전반 보증 아님 — 가상요소 / 동적 상태는 사람이 storybook 켜고 확인.

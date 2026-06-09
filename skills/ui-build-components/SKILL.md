@@ -10,10 +10,9 @@ allowed-tools: Bash, Read, Write, Agent
 
 ## 어떻게 (참고)
 
-| 역할                                        | 절차                        | 코드/예시                      |
-| ------------------------------------------- | --------------------------- | ------------------------------ |
-| **메인 에이전트** (사전 확인 → 분배 → 검증) | `references/main-flow.md`   | `references/main-example.md`   |
-| **워커 sub-agent** (1 컴포넌트 빌드)        | `references/worker-flow.md` | `references/worker-example.md` |
+- 메인 에이전트 절차 → `references/main-flow.md`
+- 워커 sub-agent 절차 (1 컴포넌트 빌드) → `references/worker-flow.md`
+- 전체 워크플로우 예시 (Button 한 라운드 처음부터 끝까지) → `references/example.md`
 
 ## 다음
 
