@@ -1,6 +1,6 @@
-# Button 컴포넌트 워크플로우 (한 라운드)
+# 메인 에이전트 워크플로우 (Button 한 라운드)
 
-`DESIGN.md` (consumer repo 안 위치 가변 — UXResearchEngine 의 경우 `frontend/DESIGN.md`) 의 디자인 결정을 Tailwind 클래스로 변환하는 한 라운드.
+`DESIGN.md` 의 컴포넌트 목록 → sub-agent 분배 → 검증 1회. 워커 절차는 `worker-flow.md`.
 
 ## 0. 전제
 
@@ -13,30 +13,7 @@ $ find . -name DESIGN.md -not -path '*/node_modules/*'
 ./frontend/DESIGN.md
 ```
 
-→ 못 찾으면 사람에게 경로 묻기. 찾은 `DESIGN.md` 에서 이번 컴포넌트 관련 토큰 / variant / 원칙 추출. 예 (UXResearchEngine):
-
-```markdown
-## Colors
-
-- primary: #0066cc # 기본 CTA. interactive 한 액션
-- on-primary: #ffffff # primary 위 텍스트
-- ink: #1d1d1f # 본문 텍스트
-- surface-pearl: #fafafc # ghost / 보조 hover 배경
-- ...
-
-## Components
-
-- Button (variant: default | ghost | destructive; size: md | sm)
-  - default: primary 면 + on-primary 텍스트
-  - ghost: 투명, ink 텍스트, surface-pearl hover
-  - destructive: 빨강 계열
-```
-
-→ AI 가 이 결정 (어떤 토큰 / 어떤 variant / 어떤 상호작용) 을 보고 작업.
-
-### 인프라 — AI 가 직접 만지지 않음
-
-Tailwind 가 인식하는 `@theme` CSS 가 consumer 의 인프라에 있어야 함 (theme.css / index.css / 어디든). step 1 (`pnpm ui-agent tokens --format css-tailwind`) 결과를 쓰거나 consumer 가 직접 관리. AI 는 Tailwind 가 `bg-primary` 같은 클래스를 인식한다는 것만 전제로 함.
+→ 못 찾으면 사람에게 경로 묻기.
 
 ### shadcn CLI + 네트워크 allowlist 확인 (샌드박스 환경)
 
@@ -49,7 +26,7 @@ $ pnpm dlx shadcn --version 2>/dev/null && echo OK || echo "shadcn CLI 실행 �
 - `ui.shadcn.com` (컴포넌트 fetch)
 - `registry.npmjs.org` (pnpm dlx 의 패키지 다운로드)
 
-권한 거부는 간헐적일 수 있으니 step 2 fetch 시 2~3회 재시도 후 사람 보고 (첫 거부로 멈추면 false negative).
+권한 거부는 간헐적이라 워커 fetch 시 2~3회 재시도 후 메인에게 보고 (첫 거부로 멈추면 false negative).
 
 ### Storybook 설치 확인
 
@@ -63,109 +40,220 @@ $ ls .storybook/ 2>/dev/null || grep -q '"@storybook' package.json && echo OK ||
 pnpm dlx storybook@latest init
 ```
 
-거부 / 보류면 아래 step 4 (story 작성) skip.
+거부 / 보류면 워커의 story 생성 + step 3 의 test-runner skip.
 
-> 검증 도구 (`eslint-plugin-better-tailwindcss`, `@storybook/test-runner`, `axe-playwright` 등) 의 설치 / 설정은 verify SKILL (#39) 의 영역. 이 SKILL 은 빌드만 책임.
-
-## 1. DESIGN.md 에서 결정 추출
-
-이번 라운드 (Button): primary / on-primary / ink / surface-pearl + 3 variants × 2 sizes.
-
-## 2. CLI 로 베이스 fetch
+### eslint-plugin-better-tailwindcss 설치 확인
 
 ```bash
-$ pnpm dlx shadcn add button
-# → components/ui/button.tsx 생성
+$ grep -q '"eslint-plugin-better-tailwindcss"' package.json && echo OK || echo "없음 — pnpm add -D eslint-plugin-better-tailwindcss + config (3. 검증 참고)"
 ```
 
-샌드박스에서 권한/네트워크 거부 시 2~3회 재시도 후 사람 보고. (MCP 는 메타데이터만 주고 소스 본문을 안 줘서 fetch 는 항상 CLI 가 담당.)
+`eslint-plugin-tailwind-v4` 는 cva 의 base 문자열만 검사하고 `variants` 객체 안은 무시 (소스: `rules/no-undefined-classes.js` 의 `extractClassNames` 가 `Literal`/`TemplateLiteral` 만 처리). 그래서 `better-tailwindcss` 로 교체.
 
-## 3. 컴포넌트 본문 — 베이스 정화 + DESIGN.md 결정을 Tailwind 클래스로
+### @storybook/test-runner + addon-a11y + axe-playwright 설치 확인 (Storybook 있을 때)
 
-shadcn 베이스에는 우리 DESIGN.md 와 무관한 표현이 섞여 옴:
+```bash
+$ grep -q '"@storybook/test-runner"' package.json \
+  && grep -q '"@storybook/addon-a11y"' package.json \
+  && grep -q '"axe-playwright"' package.json \
+  && echo OK || echo "없음 — pnpm add -D @storybook/test-runner @storybook/addon-a11y axe-playwright + .storybook/test-runner.ts + npx playwright install chromium (3. 검증 참고)"
+```
 
-- 표준 shadcn 스타일 (예: `shadow-sm`, `border` 기본값) — DESIGN.md 가 명시적으로 금지한 항목이면 제거
-- 디자인 값을 하드코딩한 arbitrary (예: `grid-rows-[auto_auto]`, `h-[44px]`, `bg-[#hex]`) — step 6 lint 가 에러로 잡지만 여기서 미리 정리
-- 디자인 원칙 어긋난 표현 (예: 우리는 elevation 대신 border 로 구분한다면 모든 `shadow-*` 제거)
+런타임에 `cn()` (= `twMerge`) 이 같은 그룹 클래스 (예: `text-on-primary` 색 + `text-body` 크기) 를 합쳐 떨구는 경우 — CSS 는 정상 생성, className 만 빠져서 static 으로 못 잡음. test-runner 가 헤드리스 Chromium 렌더 + axe 로 잡음.
 
-> **carve-out**: 프레임워크가 런타임에 채우는 CSS var 는 기능적 plumbing 이라 **유지**. 예: radix 의 `min-w-[var(--radix-select-trigger-width)]` 를 지우면 Select 드롭다운 너비가 깨진다. 이런 줄은 `// eslint-disable-next-line better-tailwindcss/no-restricted-classes` 로 lint 만 명시적으로 우회 (디자인 값 하드코딩 / 프레임워크 plumbing 을 코드에서 구분).
+## 1. 컴포넌트 목록 결정
 
-베이스를 정화한 다음 DESIGN.md 결정을 토큰 클래스로 매핑:
+이번 라운드 (예시): `Button`, `Card`, `Input`. DESIGN.md 의 `## Components` 절에서 추출 후 사람과 확정.
 
-`components/ui/button.tsx`:
+## 2. sub-agent 분배 (병렬)
 
-```tsx
-import { cva, type VariantProps } from 'class-variance-authority';
-import { cn } from '@/lib/utils';
+각 컴포넌트마다 워커 sub-agent 호출. **세 워커가 병렬로 동시 실행**:
 
-const buttonVariants = cva(
-  'inline-flex items-center justify-center rounded-md font-medium transition-colors disabled:opacity-50',
+```
+Agent(name="ui-build-worker-button", prompt="
+  references/worker-flow.md 의 절차에 따라 컴포넌트 1개 빌드.
+  - 이름: button
+  - DESIGN.md: ./frontend/DESIGN.md
+  검증은 안 함. 출력만:
+    components/ui/button.tsx
+    components/stories/button.stories.tsx
+    components/ui/button.manifest.json
+")
+Agent(name="ui-build-worker-card", prompt="...")
+Agent(name="ui-build-worker-input", prompt="...")
+```
+
+→ 워커가 끝나면 보고. 권한 / 토큰 / 결정 사항이 필요하면 메인으로 escalate (워커가 임의 결정 안 함).
+
+## 3. 검증 — `eslint-plugin-better-tailwindcss` 셋업
+
+`eslint.config.js`:
+
+```js
+import betterTailwindcss from 'eslint-plugin-better-tailwindcss';
+
+export default [
   {
-    variants: {
-      variant: {
-        // DESIGN.md → primary + on-primary
-        default: 'bg-primary text-on-primary hover:bg-primary-focus',
-        // DESIGN.md → 투명 + ink 텍스트 + surface-pearl hover
-        ghost: 'text-ink hover:bg-surface-pearl',
-        // DESIGN.md → destructive (예: danger 토큰이 정의되어 있을 때)
-        destructive: 'bg-danger text-on-danger hover:bg-danger-focus',
-      },
-      size: {
-        md: 'h-10 px-4 text-sm',
-        sm: 'h-8 px-3 text-xs',
+    plugins: { 'better-tailwindcss': betterTailwindcss },
+    settings: {
+      'better-tailwindcss': {
+        // consumer 의 CSS entry. @import 체인 따라 @theme 토큰 인식
+        entryPoint: 'src/index.css',
       },
     },
-    defaultVariants: { variant: 'default', size: 'md' },
+    rules: {
+      // DESIGN.md / @theme 에 없는 토큰 차단 (cva variants 안 nested 클래스 포함)
+      'better-tailwindcss/no-unknown-classes': 'error',
+      // arbitrary value (text-[#ff0000] / p-[13px]) 차단
+      'better-tailwindcss/no-restricted-classes': [
+        'error',
+        {
+          restrict: [
+            {
+              pattern: '\\[([^\\[\\]]*?)\\](?!:)',
+              message: 'arbitrary value 금지 — DESIGN.md 토큰을 쓰거나 사람 결정 대기',
+            },
+          ],
+        },
+      ],
+    },
   },
-);
+];
+```
 
-export interface ButtonProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement>, VariantProps<typeof buttonVariants> {}
+→ `entryPoint` 에서 `@import` 체인 따라 토큰 인식. cva / cn / clsx / twMerge / tv 인자 + nested object 까지 검사.
 
-export function Button({ className, variant, size, ...props }: ButtonProps) {
-  return <button className={cn(buttonVariants({ variant, size }), className)} {...props} />;
+### test-runner + addon-a11y + axe-playwright 셋업
+
+설치:
+
+```bash
+pnpm add -D @storybook/test-runner @storybook/addon-a11y axe-playwright
+npx playwright install chromium
+```
+
+`.storybook/main.ts`:
+
+```ts
+import type { StorybookConfig } from '@storybook/react-vite';
+
+const config: StorybookConfig = {
+  stories: ['../src/components/stories/**/*.stories.@(ts|tsx)'],
+  addons: ['@storybook/addon-a11y'],
+  framework: { name: '@storybook/react-vite', options: {} },
+};
+export default config;
+```
+
+`.storybook/test-runner.ts` — **실제 axe 트리거**:
+
+```ts
+import { injectAxe, checkA11y } from 'axe-playwright';
+import type { TestRunnerConfig } from '@storybook/test-runner';
+
+const config: TestRunnerConfig = {
+  async preVisit(page) {
+    await injectAxe(page);
+  },
+  async postVisit(page) {
+    await checkA11y(page, '#storybook-root', {
+      detailedReport: true,
+      detailedReportOptions: { html: true },
+    });
+  },
+};
+export default config;
+```
+
+`package.json` script:
+
+```jsonc
+{
+  "scripts": {
+    "test-storybook": "test-storybook",
+  },
 }
 ```
 
-→ DESIGN.md 의 결정 (어떤 토큰) ↔ 클래스 (`bg-primary`, `text-on-primary`) 1:1 매핑. **arbitrary value 없음**. DESIGN.md 에 없는 토큰 (예: `danger`) 이 필요하면 작성 멈추고 사람 보고 — SKILL 이 임의로 토큰 추가하지 않음.
+> **한계**: axe 는 `::placeholder` 같은 가상요소 대비를 못 본다 (예: Input placeholder 색 대비 회귀는 게이트 통과). 대비 회귀의 보조 게이트이지 a11y 전반 보증 아님 — 가상요소 / 동적 상태는 사람이 storybook 켜고 확인.
 
-## 4. Storybook story
+## 4. 검증 실행 — pass
 
-`components/stories/button.stories.tsx`:
+모든 워커 완료 후 메인이 1회 트리거:
+
+```bash
+$ pnpm prettier --check components/ui components/stories
+All matched files use Prettier code style!
+
+$ pnpm eslint components/ui components/stories
+# (출력 없음 = 통과)
+
+$ pnpm test-storybook
+PASS  Button > Default
+PASS  Button > Ghost
+PASS  Button > Destructive
+PASS  Card > Default
+PASS  Input > Default
+Test Suites: 3 passed, 3 total
+```
+
+→ pass. 다음 단계 (`/ui-design-pages`).
+
+## 5. 검증 실행 — fail 예시
+
+### lint fail — cva variants 안 하드코딩
 
 ```tsx
-import type { Meta, StoryObj } from '@storybook/react';
-import { Button } from '../ui/button';
-
-const meta: Meta<typeof Button> = { component: Button };
-export default meta;
-
-export const Default: StoryObj<typeof Button> = { args: { children: 'Click' } };
-export const Ghost: StoryObj<typeof Button> = { args: { variant: 'ghost', children: 'Ghost' } };
-export const Destructive: StoryObj<typeof Button> = {
-  args: { variant: 'destructive', children: 'Delete' },
-};
+// 잘못된 예 — cva variants 안 하드코딩
+const buttonVariants = cva('inline-flex items-center', {
+  variants: {
+    variant: {
+      default: 'bg-VARIANTBAD',
+      destructive: 'bg-[#0066cc]',
+    },
+  },
+});
 ```
 
-## 5. manifest 작성
-
-`components/ui/button.manifest.json` (컴포넌트 옆에 분산 저장 — 병렬 작업 충돌 회피):
-
-```json
-{
-  "name": "Button",
-  "path": "components/ui/button.tsx",
-  "variants": ["default", "ghost", "destructive"],
-  "sizes": ["md", "sm"],
-  "slots": [],
-  "tags": ["interactive", "cta"]
-}
+```bash
+$ pnpm eslint components/ui/button.tsx
+components/ui/button.tsx
+   5:18  error  'bg-VARIANTBAD' is not a known tailwind class
+                 better-tailwindcss/no-unknown-classes
+   6:22  error  arbitrary value 금지 — DESIGN.md 토큰을 쓰거나 사람 결정 대기
+                 better-tailwindcss/no-restricted-classes
 ```
 
-→ 한 컴포넌트당 한 파일. 전체 집계 (`components.manifest.json` 생성 등) 는 별도 도구의 몫.
+→ fail 보고 형식:
 
-## 6. 검증은 verify SKILL (#39) 의 몫
+```
+✗ Button 컴포넌트 lint fail
+  - components/ui/button.tsx:5 — cva variants 안 bg-VARIANTBAD (no-unknown-classes)
+  - components/ui/button.tsx:6 — cva variants 안 bg-[#0066cc] arbitrary (no-restricted-classes)
+  DESIGN.md 확인: primary(#0066cc) 와 동일 → bg-primary 로 교체 권장
+  VARIANTBAD 는 DESIGN.md 에 없음 → 갱신 여부 결정 필요
+  결정 대기 — 진행할지, DESIGN.md 갱신할지
+```
 
-이 SKILL 은 step 5 (manifest 작성) 까지로 끝. prettier / eslint (`better-tailwindcss`) / `@storybook/test-runner` + `axe-playwright` 의 셋업 / 실행 / fail 보고는 verify SKILL 책임 — storybook 서버 + Chromium 비용 때문에 컴포넌트마다 도는 건 비효율, 중앙에서 1회 트리거.
+### a11y fail — 런타임 className 누락
 
-> 한계: axe 는 `::placeholder` 같은 가상요소 대비를 못 잡음. 대비 회귀의 보조 게이트이지 a11y 전반 보증 아님 — 가상요소 / 동적 상태는 사람이 storybook 켜고 확인 (이 노트는 verify SKILL 에서 다시 명시).
+eslint pass 인데도 런타임에 `cn()` 이 `text-on-primary` 를 떨궈 흰 글자가 사라진 경우:
+
+```bash
+$ pnpm test-storybook
+FAIL  Button > Default
+  Expected 0 a11y violations but received 1:
+  - color-contrast: Element has insufficient color contrast of 2.43 (foreground: #1d1d1f, background: #0066cc, expected: 4.5)
+    <button class="... bg-primary text-body">Click</button>
+```
+
+→ fail 보고 형식:
+
+```
+✗ Button 컴포넌트 a11y fail
+  - Default story — color-contrast 2.43 (4.5 필요)
+  - 추정 원인: text-on-primary 가 런타임에 누락 → ink 색 (#1d1d1f) 으로 렌더
+  - 점검: cn() / twMerge() 가 같은 그룹 (text-*) 클래스를 합쳐 떨궜는지 확인
+  - 수정 후보: 컨슈머 `lib/utils.ts` 의 `extendTailwindMerge` 로 typography 토큰 분리
+  결정 대기 — 컨슈머 측 cn() 정의 수정 여부
+```
