@@ -35,6 +35,8 @@ shadcn 베이스에는 우리 DESIGN.md 와 무관한 표현이 섞여 옴. 본�
 
 ## 5. manifest 작성
 
-`components/ui/<name>.manifest.json` (컴포넌트 옆에 분산 저장 — 병렬 작업 충돌 회피). 필드: `name`, `path`, `variants`, `sizes`, `slots`, `tags`.
+`components/ui/<name>.manifest.json` (컴포넌트 옆에 분산 저장 — 병렬 작업 충돌 회피). 필드: `name`, `replaces`, `path`, `variants`, `sizes`, `slots`, `tags`.
+
+- **`replaces`** — 이 프리미티브가 감싸는 네이티브 HTML 태그명 (예: Button → `"button"`, Input → `"input"`). "DS 충실 사용" 린트(`templates/eslint-raw-tag-gate.mjs`)가 "프리미티브 있는데 raw 태그 박음" 을 차단할 때 이 필드에서 금지 태그를 유도. **단일 네이티브 태그를 drop-in 대체하는 경우만** 채움 — Radix 합성(select / dialog / tabs 등)처럼 단일 태그 대체가 아니면 생략.
 
 워커는 여기까지. 검증은 메인이 모든 워커 끝난 뒤 1회.

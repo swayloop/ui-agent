@@ -21,6 +21,8 @@ const MAPPINGS: FileMapping[] = [
   { src: 'claude-settings.json.tpl', dst: '.claude/settings.json' },
   { src: 'design-lint-gate.sh.tpl', dst: '.claude/hooks/design-lint-gate.sh' },
   { src: 'design-lint-gate.sh.tpl', dst: '.codex/hooks/design-lint-gate.sh' },
+  // "DS 충실 사용" 린트 — manifest replaces 기반 raw-태그 게이트 (eslint.config.js 에서 import)
+  { src: 'eslint-raw-tag-gate.mjs.tpl', dst: 'eslint-raw-tag-gate.mjs' },
 ];
 
 async function exists(p: string): Promise<boolean> {
