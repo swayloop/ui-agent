@@ -1,6 +1,16 @@
 # IA 포맷 스펙
 
-화면 파일과 플로우 파일 두 종류. 둘 다 Markdown 본문 + YAML frontmatter.
+화면 파일과 플로우 파일 두 종류. 둘 다 Markdown 본문 + YAML frontmatter
+
+## 폴더 구조
+
+```
+ia/
+├── README.md          # 작성 컨벤션 (consumer 레포에 둠)
+├── screens/           # 화면별 IA (1 화면 = 1 파일)
+├── flows/             # 화면 내 기능/툴 상세 플로우 (screen 보다 작은 단위)
+└── patterns/          # IA 스캔으로 도출된 공통 패턴 인벤토리 (step 2 산출물)
+```
 
 ## 화면 파일 (`screens/<id>.md`)
 
