@@ -52,4 +52,10 @@ python3 scripts/scan-components.py --ia <IA_DIR> --ui <components/ui_DIR> [--thr
 
 ## 검증
 
-`prettier --check` · eslint(토큰 + raw-tag 게이트) · `tsc` · `build-storybook` 통과 확인.
+승격분을 코드로 빌드했으면 `ui-build-components` 와 동일한 게이트를 통과시킨다:
+
+- `prettier --check` · eslint(토큰 + raw-tag 게이트) · `tsc`
+- `build-storybook` (스토리 빌드)
+- **`test-storybook` — `.storybook/test-runner.ts` 의 axe 훅으로 a11y(대비·역할·라벨 등) 검사.**
+  셸/패턴도 스토리를 동반하므로 컴포넌트와 같은 a11y 기준을 적용한다.
+  (Storybook 미설치면 사람에게 설치 안내, 거부 시 test-runner skip + 보고에 명시.)
