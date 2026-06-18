@@ -40,6 +40,7 @@ components:
 ```
 
 포인트:
+
 - `components` 가 전부 실제 DS 코드명 → step 2 스캔이 `AppHeader`·`Card` 등의 등장 빈도를 집계.
 - "동작 미구현" 을 솔직히 표시 — 임의 확정 안 함.
 - `Go` 의 `[project-detail]` 이 다른 화면 `id` 를 가리켜 사이트맵 엣지 형성.
@@ -52,8 +53,8 @@ components:
 ---
 id: persona-tool
 kind: flow
-in_screen: chat            # 채팅 도구 탭에서 동작
-scope: project             # 페르소나는 프로젝트 단위 공유 (가정 — 변경 가능)
+in_screen: chat # 채팅 도구 탭에서 동작
+scope: project # 페르소나는 프로젝트 단위 공유 (가정 — 변경 가능)
 status: new
 components:
   - ToolContextSidebar
@@ -61,7 +62,7 @@ components:
   - Modal
   - Card
   - Button
-  - Classroom            # 시뮬레이션 (모달 내부, DS 재작성 대상)
+  - Classroom # 시뮬레이션 (모달 내부, DS 재작성 대상)
 ---
 
 # 페르소나 툴 플로우
@@ -73,16 +74,20 @@ components:
 사용자가 직접 두 축을 입력해 만든다.
 
 ### 인구학적 통계 (직접 입력)
+
 - 이름 / 연령대 / 성별 / 사용 빈도 / 직업 / 지역 / 기술 숙련도
 
 ### 정체성 (직접 입력)
+
 - 목표 / 동기 / 이탈 트리거
 
 ## 연결
+
 - 화면: [chat]
 ```
 
 포인트:
+
 - `kind: flow` + `in_screen` 으로 화면 IA 와 연결.
 - `scope` 가 가정이면 `(가정 — 변경 가능)` 명시.
 - 재작성 대상 컴포넌트(`Classroom`)도 코드명으로 적되 주석으로 상태 표시.

@@ -6,10 +6,10 @@
 
 ```markdown
 ---
-id: <kebab-id>            # 화면 식별자 (Go 링크가 가리키는 대상)
+id: <kebab-id> # 화면 식별자 (Go 링크가 가리키는 대상)
 route: <react-router 경로>
 status: keep | drop | new # 기능 축소/재정의 후 거취
-components:               # 이 화면이 쓰는 DS/공통 컴포넌트 (빈도 스캔 대상)
+components: # 이 화면이 쓰는 DS/공통 컴포넌트 (빈도 스캔 대상)
   - ComponentName
 ---
 
@@ -18,13 +18,16 @@ components:               # 이 화면이 쓰는 DS/공통 컴포넌트 (빈도 
 <화면 한두 줄 목적 설명>
 
 ## 구성 (Input/Layout)
+
 - 화면을 이루는 영역·요소 (위→아래 / 좌→우 순)
 
 ## Do (행동)
-- <동사-명사>: 결과/이동           # 사용자가 할 수 있는 행동
+
+- <동사-명사>: 결과/이동 # 사용자가 할 수 있는 행동
 
 ## Go (이동)
-- <트리거> → [target-screen-id]    # 다른 화면으로의 이동
+
+- <트리거> → [target-screen-id] # 다른 화면으로의 이동
 ```
 
 ## 플로우 파일 (`flows/<id>.md`)
@@ -35,8 +38,8 @@ components:               # 이 화면이 쓰는 DS/공통 컴포넌트 (빈도 
 ---
 id: <kebab-id>
 kind: flow
-in_screen: <screen-id>    # 어느 화면에서 동작하는가
-scope: project | chat | ...  # 데이터/상태 공유 범위 (가정이면 명시)
+in_screen: <screen-id> # 어느 화면에서 동작하는가
+scope: project | chat | ... # 데이터/상태 공유 범위 (가정이면 명시)
 status: new | keep | drop
 components:
   - ComponentName
@@ -47,9 +50,11 @@ components:
 <한두 줄 설명>
 
 ## A. <단계/모드>
+
 - ...
 
 ## 연결
+
 - 관련 플로우/이슈 링크
 - 화면: [screen-id]
 ```
