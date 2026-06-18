@@ -1,0 +1,7 @@
+interface:
+  display_name: "ia-patterns"
+  short_description: "IA 의 frontmatter components: 를 전 화면 스캔해 공통 패턴(레이아웃 셸/반복 콘텐츠)을 빈도로 도출하고"
+  default_prompt: "$ia-patterns 를 시작해줘."
+
+policy:
+  allow_implicit_invocation: true
