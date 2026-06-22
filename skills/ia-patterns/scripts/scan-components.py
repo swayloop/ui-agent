@@ -40,9 +40,11 @@ def frontmatter(path: str) -> str:
 
 
 def scan(ia_dir: str):
+    # flat(screens/x.md, flows/x.md)·중첩(screens/x/x.md, screens/x/flows/y.md) 둘 다 잡는다.
+    # legacy/ 는 screens/·flows/ 하위가 아니라 자연 제외 (폐기 IA 는 스캔 대상 아님).
     files = sorted(
-        glob.glob(os.path.join(ia_dir, "screens", "*.md"))
-        + glob.glob(os.path.join(ia_dir, "flows", "*.md"))
+        glob.glob(os.path.join(ia_dir, "screens", "**", "*.md"), recursive=True)
+        + glob.glob(os.path.join(ia_dir, "flows", "**", "*.md"), recursive=True)
     )
     host: dict[str, str] = {}
     recs: list[tuple[str, list[str]]] = []

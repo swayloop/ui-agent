@@ -10,11 +10,11 @@ id: project-list
 route: /
 status: keep
 components:
-  - AppHeader
-  - Card
-  - Badge
-  - Button
-  - Input
+   - AppHeader
+   - Card
+   - Badge
+   - Button
+   - Input
 ---
 
 # 프로젝트 목록
@@ -39,15 +39,10 @@ components:
 - 프로젝트 카드 클릭 → [project-detail]
 ```
 
-포인트:
+## 플로우 예시 — `screens/chat/flows/persona-tool.md` (발췌)
 
-- `components` 가 전부 실제 DS 코드명 → step 2 스캔이 `AppHeader`·`Card` 등의 등장 빈도를 집계.
-- "동작 미구현" 을 솔직히 표시 — 임의 확정 안 함.
-- `Go` 의 `[project-detail]` 이 다른 화면 `id` 를 가리켜 사이트맵 엣지 형성.
-
-## 플로우 예시 — `flows/persona-tool.md` (발췌)
-
-화면(chat) 안의 "페르소나 도구" 가 커서 별도 플로우로 분리한 경우.
+화면(chat) 안의 "페르소나 도구" 가 커서 별도 플로우로 분리한 경우. chat 에 flow 가 생겨
+`screens/chat.md` → `screens/chat/chat.md` + `flows/` 로 폴더 승격됐다.
 
 ```markdown
 ---
@@ -57,12 +52,12 @@ in_screen: chat # 채팅 도구 탭에서 동작
 scope: project # 페르소나는 프로젝트 단위 공유 (가정 — 변경 가능)
 status: new
 components:
-  - ToolContextSidebar
-  - PersonaPicker
-  - Modal
-  - Card
-  - Button
-  - Classroom # 시뮬레이션 (모달 내부, DS 재작성 대상)
+   - ToolContextSidebar
+   - PersonaPicker
+   - Modal
+   - Card
+   - Button
+   - Classroom # 시뮬레이션 (모달 내부, DS 재작성 대상)
 ---
 
 # 페르소나 툴 플로우
@@ -85,9 +80,3 @@ components:
 
 - 화면: [chat]
 ```
-
-포인트:
-
-- `kind: flow` + `in_screen` 으로 화면 IA 와 연결.
-- `scope` 가 가정이면 `(가정 — 변경 가능)` 명시.
-- 재작성 대상 컴포넌트(`Classroom`)도 코드명으로 적되 주석으로 상태 표시.

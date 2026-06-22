@@ -1,53 +1,33 @@
-# 예시 (UXResearchEngine dogfood)
+# 예시 (UXResearchEngine dogfood — RAG 평가 워크벤치)
 
-IA 4 파일(screens 3 + flows 1)에 절차를 그대로 돌린 실제 결과.
+IA 5 파일(screens 4 + flow 1)에 절차를 돌린 결과. 스크립트가 1~4단계, 사람이 5단계를 맡는다.
 
-## 스캔 + 차감 + 접기 결과
+## 스캔 결과 (스크립트 출력)
 
-`kind: flow` 인 `persona-tool`(`in_screen: chat`)을 chat 으로 접고, DS 원자를 표시:
+`promote-version`(flow, `in_screen: experiment-detail`)을 접고 DS 원자를 차감:
 
-| 컴포넌트           | 화면 수 | DS? | 거취                        |
-| ------------------ | ------- | --- | --------------------------- |
-| AppHeader          | 3       | —   | **공통 승격 → 레이아웃 셸** |
-| Button / Card      | 3       | DS  | 원자 (재사용 확인)          |
-| Badge              | 2       | DS  | 원자                        |
-| Input              | 1       | DS  | 원자                        |
-| Modal              | 1       | DS  | → DS `Dialog` 로 환산       |
-| ToolContextSidebar | 1       | —   | 페이지 로컬 (chat)          |
-| ChatComposer       | 1       | —   | 페이지 로컬 (chat)          |
-| PersonaPicker      | 1       | —   | 페이지 로컬 (chat)          |
-| Classroom          | 1       | —   | 페이지 로컬 (chat)          |
-| DialogueBox        | 1       | —   | 페이지 로컬 (chat)          |
-| VerdictCard        | 1       | —   | 페이지 로컬 (chat)          |
+| 컴포넌트                   | 화면 수 | 거취(빈도만)  |
+| -------------------------- | ------- | ------------- |
+| AppHeader                  | 4       | **공통 승격** |
+| MetricBar                  | 3       | **공통 승격** |
+| Table / Chart / TraceList  | 1       | 페이지 로컬   |
+| Badge·Button·Card·Dialog·… | —       | 원자 (차감)   |
 
-> 접기 전엔 ToolContextSidebar·Classroom 등이 2 회(persona-tool + chat)로 잡혔지만,
-> persona-tool 이 곧 chat 이라 1 회로 교정 — **플로우 접기가 없으면 가짜 승격이 난다.**
+> 접기 전엔 MetricBar 가 4회로 잡히지만 flow 가 곧 experiment-detail 이라 3회로 교정 —
+> 접기가 없으면 가짜 승격이 난다. `ia/legacy/` 는 스캔에서 자연 제외.
 
-## 승격 결과
+## 5단계 분류
 
-비-DS 중 ≥2 는 **AppHeader 하나**뿐 → `AppShell` 레이아웃 셸로 승격.
+스크립트는 **빈도만** 본다. 사람이 **shadcn 프리미티브인지**로 가른다:
 
-```markdown
----
-id: app-shell
-kind: pattern
-pattern_type: layout-shell
-appears_in: # 스캔 산출
-  - project-list
-  - project-detail
-  - chat
-components:
-  - AppHeader
-code: components/ui/app-shell.tsx
----
-```
+- **공통 컴포넌트 → `ui-build-components` 핸드오프** — `Table`·`Chart`, 그리고 점수 막대
+  `MetricBar`(= shadcn `Progress`). 전부 shadcn 이 프리미티브로 제공 → 1 화면이든 3 화면이든
+  핸드오프. (빈도는 무관.)
+- **레이아웃 셸** — `AppHeader`(4 화면) → `AppShell`(래퍼 + `header` 슬롯). 슬롯 주입으로
+  화면별 props 유지. `ia/patterns/app-shell.md` 인벤토리 기록.
+- **페이지 로컬** — `TraceList`: run-detail 한 곳뿐인 도메인 조합(질문별 trace 펼침). shadcn
+  프리미티브가 아니므로 핸드오프 대상도 아니다 → 그 화면에서 DS 원자로 조립.
 
-빌드: `AppShell`(래퍼 + `header` 슬롯 + children) + `AppShellMain`(중앙 정렬 본문).
-AppHeader 는 **슬롯으로 주입** — 화면별 `showContext` 등 props 를 그대로 유지.
-
-## 성급한 추상화 방지가 작동한 지점
-
-- 시뮬레이션 클러스터(Classroom·DialogueBox·VerdictCard)는 chat 한 곳뿐 → **공통으로 안 올림**.
-  로컬이라고 raw 로 두는 게 아니라, 재작성 시 기존 DS 원자(Card·Badge·Button)로 조립한다.
-- 처음 `tone: parchment | canvas` 변형을 넣었다가, 3 화면 모두 parchment 라 **canvas 제거** —
-  IA 에 없는 변형은 만들지 않는다.
+> 핵심: `Table`·`Chart`·`TraceList` 가 스크립트 표엔 똑같이 1 화면 "페이지 로컬"이지만,
+> shadcn 프리미티브(`Table`·`Chart`)는 핸드오프, 아닌 것(`TraceList`)만 페이지 로컬로 남는다.
+> 판정선은 등장 횟수가 아니라 **shadcn 제공 여부**다.

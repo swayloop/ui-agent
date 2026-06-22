@@ -1,0 +1,7 @@
+interface:
+  display_name: "ui-assemble-screens"
+  short_description: "IA + 셸 + components/ui + DESIGN.md 토큰으로 React 페이지(src/pages)를 조립. raw 태그·arbitrary 금지, IA 외 추가 금지. 절차·예시는 references/ 참고"
+  default_prompt: "$ui-assemble-screens 를 시작해줘."
+
+policy:
+  allow_implicit_invocation: true

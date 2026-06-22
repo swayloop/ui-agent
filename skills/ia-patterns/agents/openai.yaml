@@ -1,6 +1,6 @@
 interface:
   display_name: 'ia-patterns'
-  short_description: 'IA 의 frontmatter components: 를 전 화면 스캔해 공통 패턴(레이아웃 셸/반복 콘텐츠)을 빈도로 도출하고'
+  short_description: 'IA 의 frontmatter components: 를 전 화면 스캔해 공통화를 도출 — shadcn 프리미티브에 해당하는 공통 컴포넌트는 ui-build-components 핸드오프, 레이아웃 셸·반복 콘텐츠 패턴은 인벤토리·빌드. 절차·예시는 references/ 참고'
   default_prompt: '$ia-patterns 를 시작해줘.'
 
 policy:
