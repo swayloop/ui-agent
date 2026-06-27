@@ -13,8 +13,8 @@ import { resolve } from 'node:path';
 
 const files = process.argv.slice(2);
 if (files.length === 0) {
-  console.log('  (검증할 manifest 없음)');
-  process.exit(0);
+  console.error('✗ 검증할 manifest 없음 — UI_DIR 에 *.manifest.json 이 필요함');
+  process.exit(1);
 }
 
 const REQUIRED_STRING = ['name', 'path'];

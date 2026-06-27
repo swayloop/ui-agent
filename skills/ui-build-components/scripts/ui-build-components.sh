@@ -11,7 +11,7 @@ ui-build-components.sh [path...]
 빌드된 컴포넌트에 검증 게이트를 돌린다 (앱 디렉터리 기준 경로):
   - prettier     : 포맷 확인 (--check)
   - eslint       : DESIGN.md/@theme 토큰 게이트 + arbitrary value 차단 (--max-warnings 0)
-  - manifest     : UI_DIR 의 *.manifest.json 형식 검증 (worker-flow.md 5절)
+  - manifest     : UI_DIR 의 *.manifest.json 존재 + 형식 검증 (worker-flow.md 5절)
   - test-storybook: axe 훅으로 a11y(대비 등) 검사 — Storybook 있을 때만
 
 replaces(의미) 검증은 opt-in. LLM_VERIFY=1 일 때만 코딩 에이전트 CLI 가 manifest+소스를 보고
@@ -28,6 +28,8 @@ lint/format 대상으로 한다. 둘 다 환경변수로 지정 (앱 디렉터�
 
 Storybook 검사는 .storybook 디렉터리가 있으면 자동 실행. SKIP_STORYBOOK=1 로 건너뛴다.
   예: SKIP_STORYBOOK=1 bash scripts/ui-build-components.sh
+기본적으로 ui tag 가 붙은 story 만 검사한다. STORYBOOK_TEST_ARGS 로 재정의 가능.
+  예: STORYBOOK_TEST_ARGS="--includeTags ui --maxWorkers 2" bash scripts/ui-build-components.sh
 예: bash scripts/ui-build-components.sh components/ui/button.tsx
 
 한계: axe 는 ::placeholder 같은 가상요소 대비를 못 잡는다. 대비 회귀의 보조 게이트일 뿐
@@ -59,13 +61,14 @@ pnpm exec prettier --check "${FILES[@]}" || fail=1
 echo "▶ eslint (토큰 게이트)"
 pnpm exec eslint --max-warnings 0 --no-warn-ignored "${FILES[@]}" || fail=1
 
-echo "▶ manifest 형식 검증"
+echo "▶ manifest 존재 + 형식 검증"
 MANIFESTS=()                          # bash 3.2 호환 (macOS) — mapfile 미사용
 while IFS= read -r m; do MANIFESTS+=("$m"); done < <(find "$UI_DIR" -name '*.manifest.json' 2>/dev/null)
 if [ "${#MANIFESTS[@]}" -gt 0 ]; then
   node "$SCRIPT_DIR/validate-manifests.mjs" "${MANIFESTS[@]}" || fail=1
 else
-  echo "  (manifest 없음 — $UI_DIR)"
+  echo "✗ manifest 없음 — $UI_DIR 에 *.manifest.json 이 필요함 (worker-flow.md 5절)" >&2
+  fail=1
 fi
 
 if [ "${LLM_VERIFY:-}" = "1" ]; then
@@ -81,7 +84,9 @@ if [ "${SKIP_STORYBOOK:-}" = "1" ]; then
   echo "▶ test-storybook — SKIP_STORYBOOK=1 로 건너뜀"
 elif [ -d ".storybook" ]; then
   echo "▶ test-storybook (axe a11y)"
-  pnpm test-storybook || fail=1
+  STORYBOOK_TEST_ARGS="${STORYBOOK_TEST_ARGS:---includeTags ui}"
+  # shellcheck disable=SC2086 # STORYBOOK_TEST_ARGS 는 의도적으로 CLI args 로 분리한다.
+  pnpm exec test-storybook $STORYBOOK_TEST_ARGS || fail=1
 else
   echo "▶ test-storybook — .storybook 없음, 건너뜀 (axe a11y 미검증)"
 fi
