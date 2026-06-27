@@ -11,8 +11,13 @@ ui-build-components.sh [path...]
 빌드된 컴포넌트에 검증 게이트를 돌린다 (앱 디렉터리 기준 경로):
   - prettier     : 포맷 확인 (--check)
   - eslint       : DESIGN.md/@theme 토큰 게이트 + arbitrary value 차단 (--max-warnings 0)
-  - manifest     : UI_DIR 의 *.manifest.json 형식 + replaces 정합성 (worker-flow.md 5절)
+  - manifest     : UI_DIR 의 *.manifest.json 형식 검증 (worker-flow.md 5절)
   - test-storybook: axe 훅으로 a11y(대비 등) 검사 — Storybook 있을 때만
+
+replaces(의미) 검증은 opt-in. LLM_VERIFY=1 일 때만 코딩 에이전트 CLI 가 manifest+소스를 보고
+판정한다. LLM_CLI=claude(기본)|codex. CLI 미설치/실패 시 게이트 안 깨고 skip.
+  예: LLM_VERIFY=1 APP_DIR=apps/web bash scripts/ui-build-components.sh
+  예: LLM_VERIFY=1 LLM_CLI=codex bash scripts/ui-build-components.sh
 
 앱 디렉터리는 환경변수 APP_DIR 로 지정한다 (레포 루트 기준 상대경로, 기본값 frontend).
   예: APP_DIR=apps/web bash scripts/ui-build-components.sh
@@ -61,6 +66,15 @@ if [ "${#MANIFESTS[@]}" -gt 0 ]; then
   node "$SCRIPT_DIR/validate-manifests.mjs" "${MANIFESTS[@]}" || fail=1
 else
   echo "  (manifest 없음 — $UI_DIR)"
+fi
+
+if [ "${LLM_VERIFY:-}" = "1" ]; then
+  echo "▶ replaces LLM 의미 검증 (LLM_CLI=${LLM_CLI:-claude})"
+  if [ "${#MANIFESTS[@]}" -gt 0 ]; then
+    node "$SCRIPT_DIR/verify-replaces-llm.mjs" "${MANIFESTS[@]}" || fail=1
+  else
+    echo "  (manifest 없음)"
+  fi
 fi
 
 if [ "${SKIP_STORYBOOK:-}" = "1" ]; then
