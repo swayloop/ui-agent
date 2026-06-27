@@ -30,7 +30,7 @@ id: <kebab-id> # 화면 식별자 (Go 링크가 가리키는 대상)
 route: <react-router 경로>
 status: keep | drop | new # 기능 축소/재정의 후 거취
 components: # 이 화면이 쓰는 DS/공통 컴포넌트 (빈도 스캔 대상)
-   - ComponentName
+  - ComponentName
 ---
 
 # <화면 이름>
@@ -63,7 +63,7 @@ in_screen: <screen-id> # 어느 화면에서 동작하는가
 scope: project | chat | ... # 데이터/상태 공유 범위 (가정이면 명시)
 status: new | keep | drop
 components:
-   - ComponentName
+  - ComponentName
 ---
 
 # <플로우 이름>

@@ -10,11 +10,11 @@ id: project-list
 route: /
 status: keep
 components:
-   - AppHeader
-   - Card
-   - Badge
-   - Button
-   - Input
+  - AppHeader
+  - Card
+  - Badge
+  - Button
+  - Input
 ---
 
 # 프로젝트 목록
@@ -52,12 +52,12 @@ in_screen: chat # 채팅 도구 탭에서 동작
 scope: project # 페르소나는 프로젝트 단위 공유 (가정 — 변경 가능)
 status: new
 components:
-   - ToolContextSidebar
-   - PersonaPicker
-   - Modal
-   - Card
-   - Button
-   - Classroom # 시뮬레이션 (모달 내부, DS 재작성 대상)
+  - ToolContextSidebar
+  - PersonaPicker
+  - Modal
+  - Card
+  - Button
+  - Classroom # 시뮬레이션 (모달 내부, DS 재작성 대상)
 ---
 
 # 페르소나 툴 플로우
