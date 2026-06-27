@@ -11,6 +11,7 @@ ui-build-components.sh [path...]
 빌드된 컴포넌트에 검증 게이트를 돌린다 (앱 디렉터리 기준 경로):
   - prettier     : 포맷 확인 (--check)
   - eslint       : DESIGN.md/@theme 토큰 게이트 + arbitrary value 차단 (--max-warnings 0)
+  - manifest     : UI_DIR 의 *.manifest.json 형식 + replaces 정합성 (worker-flow.md 5절)
   - test-storybook: axe 훅으로 a11y(대비 등) 검사 — Storybook 있을 때만
 
 앱 디렉터리는 환경변수 APP_DIR 로 지정한다 (레포 루트 기준 상대경로, 기본값 frontend).
@@ -31,6 +32,7 @@ EOF
 
 [ "${1:-}" = "-h" ] || [ "${1:-}" = "--help" ] && { usage; exit 0; }
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(git rev-parse --show-toplevel)"
 APP_DIR="${APP_DIR:-frontend}"   # 레포 루트 기준 상대경로. 시크릿 아님 — 단순 디렉터리 경로
 APP_PATH="$ROOT/$APP_DIR"
@@ -51,6 +53,15 @@ pnpm exec prettier --check "${FILES[@]}" || fail=1
 
 echo "▶ eslint (토큰 게이트)"
 pnpm exec eslint --max-warnings 0 --no-warn-ignored "${FILES[@]}" || fail=1
+
+echo "▶ manifest 형식 검증"
+MANIFESTS=()                          # bash 3.2 호환 (macOS) — mapfile 미사용
+while IFS= read -r m; do MANIFESTS+=("$m"); done < <(find "$UI_DIR" -name '*.manifest.json' 2>/dev/null)
+if [ "${#MANIFESTS[@]}" -gt 0 ]; then
+  node "$SCRIPT_DIR/validate-manifests.mjs" "${MANIFESTS[@]}" || fail=1
+else
+  echo "  (manifest 없음 — $UI_DIR)"
+fi
 
 if [ "${SKIP_STORYBOOK:-}" = "1" ]; then
   echo "▶ test-storybook — SKIP_STORYBOOK=1 로 건너뜀"
