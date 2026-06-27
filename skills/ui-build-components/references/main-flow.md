@@ -23,13 +23,12 @@ DESIGN.md 의 `## Components` 절에서 이번 라운드에 만들 컴포넌트 
 
 ## 3. 검증 1회
 
-모든 워커 끝난 뒤 메인이 트리거:
+모든 워커 끝난 뒤 메인이 게이트 스크립트를 1회 트리거. 검증 항목·환경변수·한계는 `--help` 참고.
 
-- `pnpm prettier --check components/ui components/stories`
-- `pnpm eslint components/ui components/stories` — `better-tailwindcss/no-unknown-classes` (DESIGN.md / `@theme` 토큰만 통과) + `no-restricted-classes` (arbitrary value 차단)
-- `pnpm test-storybook` (Storybook 있을 때) — `.storybook/test-runner.ts` 의 axe 훅으로 a11y (대비 등) 검사
-
-> 한계: axe 는 `::placeholder` 같은 가상요소 대비 못 잡음. 대비 회귀의 보조 게이트일 뿐 a11y 전반 보증 아님 — 가상요소 / 동적 상태는 사람이 storybook 켜고 확인.
+```bash
+# 기본(frontend). 모노레포면 APP_DIR 등 환경변수로 경로 지정
+APP_DIR=apps/web bash scripts/ui-build-components.sh
+```
 
 ## 4. 결과
 
