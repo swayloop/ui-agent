@@ -1,7 +1,7 @@
 interface:
-   display_name: 'ia-write'
-   short_description: '화면 정보구조(IA)를 Markdown + YAML frontmatter (DoGo Map) 로 작성'
-   default_prompt: '$ia-write 를 시작해줘.'
+  display_name: 'ia-write'
+  short_description: '화면 정보구조(IA)를 Markdown + YAML frontmatter (DoGo Map) 로 작성'
+  default_prompt: '$ia-write 를 시작해줘.'
 
 policy:
-   allow_implicit_invocation: true
+  allow_implicit_invocation: true
