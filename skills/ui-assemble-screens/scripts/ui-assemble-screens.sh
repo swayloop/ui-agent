@@ -12,18 +12,26 @@ ui-assemble-screens.sh [page-file...]
   - prettier: 포맷 확인 (--check)
   - tsc     : 프로젝트 전체 타입체크 (--noEmit)
 
+DS 의미 검증은 opt-in. LLM_VERIFY=1 일 때만 코딩 에이전트 CLI 가 IA + DS manifest + page 를 보고
+판정한다. LLM_CLI=claude(기본)|codex. CLI 미설치/실패 시 게이트 안 깨고 skip.
+  예: LLM_VERIFY=1 APP_DIR=apps/web bash scripts/ui-assemble-screens.sh src/pages/Home.tsx
+  예: LLM_VERIFY=1 LLM_CLI=codex bash scripts/ui-assemble-screens.sh
+
 앱 디렉터리는 환경변수 APP_DIR 로 지정한다 (레포 루트 기준 상대경로, 기본값 frontend).
   예: APP_DIR=apps/web bash scripts/ui-assemble-screens.sh src/pages/Home.tsx
 
 인자 없으면 PAGES_DIR(기본값 src/pages) 전체를 lint/format 대상으로 한다.
 PAGES_DIR 도 환경변수로 지정 (앱 디렉터리 기준 상대경로). Next.js app 라우터면 app 등.
   예: APP_DIR=apps/web PAGES_DIR=app bash scripts/ui-assemble-screens.sh
+UI_DIR(기본 components/ui), IA_DIR(기본 ia/screens), DESIGN_PATH(기본 design/DESIGN.md) 도
+LLM 의미 검증 입력으로 사용한다.
 예: bash scripts/ui-assemble-screens.sh src/pages/ExperimentList.tsx
 EOF
 }
 
 [ "${1:-}" = "-h" ] || [ "${1:-}" = "--help" ] && { usage; exit 0; }
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(git rev-parse --show-toplevel)"
 APP_DIR="${APP_DIR:-frontend}"   # 레포 루트 기준 상대경로. 시크릿 아님 — 단순 디렉터리 경로
 APP_PATH="$ROOT/$APP_DIR"
@@ -46,6 +54,11 @@ pnpm exec prettier --check "${FILES[@]}" || fail=1
 
 echo "▶ tsc --noEmit"
 pnpm exec tsc --noEmit || fail=1
+
+if [ "${LLM_VERIFY:-}" = "1" ]; then
+  echo "▶ DS LLM 의미 검증 (LLM_CLI=${LLM_CLI:-claude})"
+  node "$SCRIPT_DIR/verify-design-system-llm.mjs" "${FILES[@]}" || fail=1
+fi
 
 if [ "$fail" -ne 0 ]; then
   echo "✗ 게이트 실패 — 위 항목을 고치세요." >&2

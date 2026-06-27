@@ -31,34 +31,27 @@
 
 ## ui-agent 가 ship 할 자산
 
-`pnpm ui-agent init` 으로 consumer 프로젝트에 카피. consumer 가 소유·편집.
+`pnpm ui-agent install-skill <name>` 으로 consumer 프로젝트의 `.agents/skills/` 에 설치한다.
+Claude 호환은 `.claude/skills` 심링크로 맞추며, Codex 는 `.agents/skills/` 를 직접 scan 한다.
 
-| 파일                     | 위치 (레포 루트 기준)                                                                    | 내용                                                                |
-| ------------------------ | ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
-| `DESIGN.md`              | `design/DESIGN.md`                                                                       | skeleton — consumer 채움 또는 외부 자산 (Awesome-Design-MD 등) 채택 |
-| `SKILL.md`               | `.claude/skills/ui-agent-workflow/SKILL.md` + `.codex/skills/...` (자동 카피, 동일 내용) | skeleton — 워크플로우 가정                                          |
-| `settings.json` (Claude) | `.claude/settings.json`                                                                  | PreToolUse 가드레일 hook 1 개 (design-lint-gate)                    |
-| `design-lint-gate.sh`    | `.claude/hooks/...` + `.codex/hooks/...` (자동 카피, 동일 내용)                          | Step 4 미통과 시 Step 5 진입 차단 skeleton                          |
-
-**자동화** — init 이 `.git` 찾아 레포 루트에 설치 + `.sh` 파일 자동 chmod +x.
-
-**Codex hooks.json** — Claude `settings.json` 과 스키마 다름. consumer 가 직접 작성 (자동 생성 deferred). skills + hooks 스크립트는 자동 카피되므로 hooks.json 만 추가하면 동작.
-
-**Divergence 주의** — `.claude/skills/...` 와 `.codex/skills/...` 가 동일 내용으로 카피됨. 한쪽 편집 시 다른 쪽 수동 동기화 필요.
+| 자산        | 위치 (레포 루트 기준)   | 내용                                   |
+| ----------- | ----------------------- | -------------------------------------- |
+| `skills/*`  | `.agents/skills/<name>` | IA 작성, 공통 컴포넌트 빌드, 화면 조립 |
+| `DESIGN.md` | consumer 소유           | 디자인 시스템 명세                     |
 
 ## 가드레일 hooks 패턴
 
 - **PreToolUse + exit 2** = 차단, **exit 0** = 허용
 - 가드레일 후보 (워크플로우 단계별):
 
-| 단계       | 가드레일                                | 메커니즘                                |
-| ---------- | --------------------------------------- | --------------------------------------- |
-| Step 2     | manifest 미등록 컴포넌트 직접 생성 차단 | PreToolUse + path 검사                  |
-| Step 4 → 5 | 디자인 린트 미통과 시 코드 변환 차단    | PreToolUse (`design-lint-gate.sh` 예시) |
-| Step 5     | 워커가 다른 워커 소유 파일 수정 차단    | PreToolUse + path 소유권 검사           |
-| Step 6     | Write 후 자동 prettier / typecheck      | PostToolUse                             |
+| 단계       | 가드레일                                | 메커니즘                      |
+| ---------- | --------------------------------------- | ----------------------------- |
+| Step 2     | manifest 미등록 컴포넌트 직접 생성 차단 | PreToolUse + path 검사        |
+| Step 4 → 5 | 디자인 린트 미통과 시 코드 변환 차단    | consumer hook                 |
+| Step 5     | 워커가 다른 워커 소유 파일 수정 차단    | PreToolUse + path 소유권 검사 |
+| Step 6     | Write 후 자동 prettier / typecheck      | PostToolUse                   |
 
-기본 ship 은 Step 4 → 5 가드레일 1 개. 나머지는 consumer 가 필요 시 추가.
+hook 은 consumer 가 필요 시 추가.
 
 ## Locked decisions
 
@@ -70,12 +63,12 @@
 - **페이지 인벤토리 SoT** = Figma (DESIGN.md 아님)
 - **AGENTS.md** = consumer 책임, ui-agent ship X
 - **Cursor Rules / AGENTS.md hierarchical** = 사용 안 함
-- **DESIGN.md, SKILL.md 본문** = skeleton 만 ship, 내용은 consumer
+- **DESIGN.md 본문** = consumer 책임
 
 ## Out of scope (deferred)
 
 - shadcn-style CLI `add` / `update` / `diff` 명령 구현
 - npm publish 모델
 - 빌드 파이프라인 자동화 (`tokens` / `components` / `pages` / `qa` 명령, 어댑터, 오케스트레이터)
-- Codex `.codex/skills/` `.codex/hooks/` 직접 ship (현재는 consumer 가 `.claude/` 에서 복사)
+- Codex `.codex/skills/` `.codex/hooks/` 직접 ship
 - DayDot 적용
